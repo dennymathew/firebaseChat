@@ -7,23 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EF0B44BC1F63BEFF005DA4A9 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF0B44BB1F63BEFF005DA4A9 /* LoginViewController.swift */; };
 		EF19FB821F63BC5A00301111 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF19FB811F63BC5A00301111 /* AppDelegate.swift */; };
-		EF19FB841F63BC5A00301111 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF19FB831F63BC5A00301111 /* ViewController.swift */; };
 		EF19FB871F63BC5A00301111 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EF19FB851F63BC5A00301111 /* Main.storyboard */; };
 		EF19FB8A1F63BC5A00301111 /* FirebaseChat.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EF19FB881F63BC5A00301111 /* FirebaseChat.xcdatamodeld */; };
 		EF19FB8C1F63BC5A00301111 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF19FB8B1F63BC5A00301111 /* Assets.xcassets */; };
 		EF19FB8F1F63BC5A00301111 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EF19FB8D1F63BC5A00301111 /* LaunchScreen.storyboard */; };
+		EF19FB971F63BC8000301111 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF19FB961F63BC8000301111 /* HomeViewController.swift */; };
+		EF665DD11F63C19900D2DCAD /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF665DD01F63C19900D2DCAD /* Extensions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		EF0B44BB1F63BEFF005DA4A9 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 		EF19FB7E1F63BC5A00301111 /* FirebaseChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FirebaseChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF19FB811F63BC5A00301111 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		EF19FB831F63BC5A00301111 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		EF19FB861F63BC5A00301111 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		EF19FB891F63BC5A00301111 /* FirebaseChat.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = FirebaseChat.xcdatamodel; sourceTree = "<group>"; };
 		EF19FB8B1F63BC5A00301111 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EF19FB8E1F63BC5A00301111 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		EF19FB901F63BC5A00301111 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EF19FB961F63BC8000301111 /* HomeViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
+		EF665DD01F63C19900D2DCAD /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,15 +60,49 @@
 		EF19FB801F63BC5A00301111 /* FirebaseChat */ = {
 			isa = PBXGroup;
 			children = (
-				EF19FB811F63BC5A00301111 /* AppDelegate.swift */,
-				EF19FB831F63BC5A00301111 /* ViewController.swift */,
+				EF19FB981F63BC8600301111 /* Application */,
+				EF19FB991F63BC9100301111 /* Controllers */,
+				EF665DCF1F63C18B00D2DCAD /* Extensions */,
 				EF19FB851F63BC5A00301111 /* Main.storyboard */,
 				EF19FB8B1F63BC5A00301111 /* Assets.xcassets */,
 				EF19FB8D1F63BC5A00301111 /* LaunchScreen.storyboard */,
-				EF19FB901F63BC5A00301111 /* Info.plist */,
+				EF19FB9A1F63BCAA00301111 /* Supporting Files */,
 				EF19FB881F63BC5A00301111 /* FirebaseChat.xcdatamodeld */,
 			);
 			path = FirebaseChat;
+			sourceTree = "<group>";
+		};
+		EF19FB981F63BC8600301111 /* Application */ = {
+			isa = PBXGroup;
+			children = (
+				EF19FB811F63BC5A00301111 /* AppDelegate.swift */,
+			);
+			name = Application;
+			sourceTree = "<group>";
+		};
+		EF19FB991F63BC9100301111 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				EF19FB961F63BC8000301111 /* HomeViewController.swift */,
+				EF0B44BB1F63BEFF005DA4A9 /* LoginViewController.swift */,
+			);
+			name = Controllers;
+			sourceTree = "<group>";
+		};
+		EF19FB9A1F63BCAA00301111 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				EF19FB901F63BC5A00301111 /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		EF665DCF1F63C18B00D2DCAD /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				EF665DD01F63C19900D2DCAD /* Extensions.swift */,
+			);
+			name = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,7 +178,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EF19FB841F63BC5A00301111 /* ViewController.swift in Sources */,
+				EF665DD11F63C19900D2DCAD /* Extensions.swift in Sources */,
+				EF0B44BC1F63BEFF005DA4A9 /* LoginViewController.swift in Sources */,
+				EF19FB971F63BC8000301111 /* HomeViewController.swift in Sources */,
 				EF19FB821F63BC5A00301111 /* AppDelegate.swift in Sources */,
 				EF19FB8A1F63BC5A00301111 /* FirebaseChat.xcdatamodeld in Sources */,
 			);
@@ -306,6 +346,7 @@
 				EF19FB951F63BC5A00301111 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 
