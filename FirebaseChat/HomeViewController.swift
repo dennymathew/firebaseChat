@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Firebase
 
 class HomeViewController: UITableViewController {
 
@@ -15,6 +16,11 @@ class HomeViewController: UITableViewController {
         
         //Logout Button
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(handleLogout))
+        
+        //Handle not Logged In User
+        if Auth.auth().currentUser?.uid == nil {
+            perform(#selector(handleLogout), with: nil, afterDelay: 0)
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -22,7 +28,16 @@ class HomeViewController: UITableViewController {
     }
     
     func handleLogout() {
+        
+        /* Logout User */
+        do {
+            try Auth.auth().signOut()
+        } catch let logoutError {
+            print(logoutError)
+        }
+        
         let loginController = LoginViewController()
+        loginController.modalTransitionStyle = .crossDissolve
         present(loginController, animated: true, completion: nil)
     }
     

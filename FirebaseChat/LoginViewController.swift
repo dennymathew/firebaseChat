@@ -7,9 +7,12 @@
 //
 
 import UIKit
+import Firebase
 
 class LoginViewController: UIViewController {
-    
+    /*---------------------------------------------*/
+                    //MARK:- Properties
+    /*---------------------------------------------*/
     let inputsContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)
@@ -28,6 +31,8 @@ class LoginViewController: UIViewController {
         button.setTitleColor(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1), for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.addTarget(self, action: #selector(handleRegisterLogin), for: .touchUpInside)
+        
         return button
     }()
     
@@ -74,47 +79,73 @@ class LoginViewController: UIViewController {
         return imagevIew
     }()
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
-        setUpInoutContainerView()
-        setUpLogionResgisterButton()
-        setUpProfileImageView()
-    }
+    let loginRegisterSegmentedControl: UISegmentedControl = {
+        let sc = UISegmentedControl(items: ["Login", "Register"])
+        sc.tintColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+        sc.selectedSegmentIndex = 0
+        sc.translatesAutoresizingMaskIntoConstraints = false
+        sc.addTarget(self, action: #selector(handleLoginRegisterSegmentChange), for: .valueChanged)
+        return sc
+    }()
+    
+    var inputsContainerViewHeightAnchor: NSLayoutConstraint?
+    var nameTextFieldHeightAnchor: NSLayoutConstraint?
+    var emailTextFieldHeightAnchor: NSLayoutConstraint?
+    var passwordTextFieldHeightAnchor: NSLayoutConstraint?
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }
+    
+    /*---------------------------------------------*/
+        //MARK:- View Controller Life Cycle
+    /*---------------------------------------------*/
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
 
-    func setUpInoutContainerView() {
+        setUpInputContainerView()
+        setUpLogionResgisterButton()
+        setUpLoginRegisterSegmentedControll()
+        setUpProfileImageView()
+    }
+
+    /*---------------------------------------------*/
+                //MARK:- Set Up Methods
+    /*---------------------------------------------*/
+    private func setUpInputContainerView() {
         
         /* Container View */
         view.addSubview(inputsContainerView)
         inputsContainerView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         inputsContainerView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
         inputsContainerView.widthAnchor.constraint(equalTo: view.widthAnchor, constant: -24).isActive = true
-        inputsContainerView.heightAnchor.constraint(equalToConstant: 150).isActive = true
+        inputsContainerViewHeightAnchor = inputsContainerView.heightAnchor.constraint(equalToConstant: loginRegisterSegmentedControl.selectedSegmentIndex == 0 ? 100 : 150)
+        inputsContainerViewHeightAnchor?.isActive = true
         
         /* Name TextField */
         inputsContainerView.addSubview(nameTextField)
         nameTextField.leftAnchor.constraint(equalTo: inputsContainerView.leftAnchor, constant: 12).isActive = true
         nameTextField.topAnchor.constraint(equalTo: inputsContainerView.topAnchor).isActive = true
         nameTextField.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor).isActive = true
-        nameTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/3).isActive = true
+        nameTextFieldHeightAnchor = nameTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: loginRegisterSegmentedControl.selectedSegmentIndex == 0 ? 0 : 1/3)
+        nameTextFieldHeightAnchor?.isActive = true
         
         /* Email TextField */
         inputsContainerView.addSubview(emailTextField)
         emailTextField.leftAnchor.constraint(equalTo: inputsContainerView.leftAnchor, constant: 12).isActive = true
         emailTextField.topAnchor.constraint(equalTo: nameTextField.bottomAnchor).isActive = true
         emailTextField.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor).isActive = true
-        emailTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/3).isActive = true
+        emailTextFieldHeightAnchor = emailTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: loginRegisterSegmentedControl.selectedSegmentIndex == 0 ? 1/2 : 1/3)
+        emailTextFieldHeightAnchor?.isActive = true
       
         /* Password TextField */
         inputsContainerView.addSubview(passwordTextField)
         passwordTextField.leftAnchor.constraint(equalTo: inputsContainerView.leftAnchor, constant: 12).isActive = true
         passwordTextField.topAnchor.constraint(equalTo: emailTextField.bottomAnchor).isActive = true
         passwordTextField.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor).isActive = true
-        passwordTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/3).isActive = true
+        passwordTextFieldHeightAnchor = passwordTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: loginRegisterSegmentedControl.selectedSegmentIndex == 0 ? 1/2 : 1/3)
+        emailTextFieldHeightAnchor?.isActive = true
         
         /* Name Separator */
         inputsContainerView.addSubview(nameSeparatorView)
@@ -131,7 +162,7 @@ class LoginViewController: UIViewController {
         emailSeparatorView.heightAnchor.constraint(equalToConstant: 1)
     }
     
-    func setUpLogionResgisterButton() {
+    private func setUpLogionResgisterButton() {
         view.addSubview(loginRegisterButton)
         loginRegisterButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         loginRegisterButton.topAnchor.constraint(equalTo: inputsContainerView.bottomAnchor, constant: 12).isActive = true
@@ -139,11 +170,109 @@ class LoginViewController: UIViewController {
         loginRegisterButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
     }
     
-    func setUpProfileImageView() {
+    private func setUpProfileImageView() {
         view.addSubview(profileImageView)
         profileImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        profileImageView.bottomAnchor.constraint(equalTo: inputsContainerView.topAnchor, constant: -24).isActive = true
+        profileImageView.bottomAnchor.constraint(equalTo: loginRegisterSegmentedControl.topAnchor, constant: -24).isActive = true
         profileImageView.widthAnchor.constraint(equalToConstant: 100).isActive = true
         profileImageView.heightAnchor.constraint(equalToConstant: 100).isActive = true
+    }
+    
+    func setUpLoginRegisterSegmentedControll() {
+        view.addSubview(loginRegisterSegmentedControl)
+        loginRegisterSegmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        loginRegisterSegmentedControl.bottomAnchor.constraint(equalTo: inputsContainerView.topAnchor, constant: -12).isActive = true
+        loginRegisterSegmentedControl.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor, multiplier: 0.5).isActive = true
+        loginRegisterSegmentedControl.heightAnchor.constraint(equalToConstant: 30).isActive = true
+    }
+    
+    //MARK:- Actions
+    func handleRegisterLogin() {
+        if loginRegisterSegmentedControl.selectedSegmentIndex == 0 {
+            handleLogin()
+        } else {
+            handleRegister()
+        }
+    }
+    
+    func handleRegister() {
+        guard let name = nameTextField.text, let email = emailTextField.text, let password = passwordTextField.text else {
+            print("Invalid Form!")
+            return
+        }
+        
+        Auth.auth().createUser(withEmail: email, password: password) { (user, error) in
+            
+            if error != nil {
+                print("Error: \(String(describing: error))")
+                return
+            }
+            
+            guard let uid = user?.uid else {
+                return
+            }
+            
+            //SUccess Signing Up
+            let ref = Database.database().reference(fromURL: FIREBASE_DB_URL)
+            let usersRef = ref.child(USERS).child(uid)
+            let values = [NAME: name, EMAIL: email]
+            usersRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
+                if err != nil {
+                    print(err!)
+                    return
+                }
+                
+                print("Saved User Successfully into Firebase DB!")
+            })
+            self.dismiss(animated: true, completion: nil)
+        }
+    }
+    
+    func handleLogin() {
+        guard let email = emailTextField.text, let password = passwordTextField.text else {
+            print("Invalid Form!")
+            return
+        }
+        Auth.auth().signIn(withEmail: email, password: password) { (user, error) in
+            if error != nil {
+                print("Error: \(String(describing: error?.localizedDescription))")
+            }
+            
+            self.dismiss(animated: true, completion: nil)
+        }
+    }
+    
+    func handleLoginRegisterSegmentChange() {
+        
+        /* Change Register/Login Button Title */
+        let title = loginRegisterSegmentedControl.titleForSegment(at: loginRegisterSegmentedControl.selectedSegmentIndex)
+        loginRegisterButton.setTitle(title, for: .normal)
+        
+        /* Change Layouts*/
+        if loginRegisterSegmentedControl.selectedSegmentIndex == 0 {
+            inputsContainerViewHeightAnchor?.constant = 100
+            nameTextFieldHeightAnchor?.isActive = false
+            nameTextFieldHeightAnchor = nameTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 0)
+            nameTextFieldHeightAnchor?.isActive = true
+            emailTextFieldHeightAnchor?.isActive = false
+            emailTextFieldHeightAnchor = emailTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/2)
+            emailTextFieldHeightAnchor?.isActive = true
+            passwordTextFieldHeightAnchor?.isActive = false
+            passwordTextFieldHeightAnchor = passwordTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/2)
+            passwordTextFieldHeightAnchor?.isActive = true
+        }
+        
+        else {
+            inputsContainerViewHeightAnchor?.constant = 150
+            nameTextFieldHeightAnchor?.isActive = false
+            nameTextFieldHeightAnchor = nameTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/3)
+            nameTextFieldHeightAnchor?.isActive = true
+            emailTextFieldHeightAnchor?.isActive = false
+            emailTextFieldHeightAnchor = emailTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/3)
+            emailTextFieldHeightAnchor?.isActive = true
+            passwordTextFieldHeightAnchor?.isActive = false
+            passwordTextFieldHeightAnchor = passwordTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/3)
+            passwordTextFieldHeightAnchor?.isActive = true
+        }
     }
 }
