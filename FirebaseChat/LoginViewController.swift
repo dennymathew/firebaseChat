@@ -9,7 +9,7 @@
 import UIKit
 import Firebase
 
-class LoginViewController: UIViewController {
+class LoginViewController: BaseViewController {
     /*---------------------------------------------*/
                     //MARK:- Properties
     /*---------------------------------------------*/
@@ -22,12 +22,12 @@ class LoginViewController: UIViewController {
         return view
     }()
     
-    let loginRegisterButton: UIButton = {
+    lazy var loginRegisterButton: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = #colorLiteral(red: 0.9607843161, green: 0.7058823705, blue: 0.200000003, alpha: 1)
         button.layer.cornerRadius = 5
         button.layer.masksToBounds = true
-        button.setTitle("Register", for: .normal)
+        button.setTitle("Login", for: .normal)
         button.setTitleColor(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1), for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -71,12 +71,15 @@ class LoginViewController: UIViewController {
         return tf
     }()
     
-    let profileImageView: UIImageView = {
-        let imagevIew = UIImageView()
-        imagevIew.image = UIImage(named: "firebase_icon")
-        imagevIew.contentMode = .scaleAspectFill
-        imagevIew.translatesAutoresizingMaskIntoConstraints = false
-        return imagevIew
+    lazy var profileImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "firebase_icon")
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.masksToBounds = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleSelectProfileImageView)))
+        return imageView
     }()
     
     let loginRegisterSegmentedControl: UISegmentedControl = {
@@ -86,6 +89,14 @@ class LoginViewController: UIViewController {
         sc.translatesAutoresizingMaskIntoConstraints = false
         sc.addTarget(self, action: #selector(handleLoginRegisterSegmentChange), for: .valueChanged)
         return sc
+    }()
+    
+    let spinner: UIActivityIndicatorView = {
+       let spin = UIActivityIndicatorView()
+        spin.activityIndicatorViewStyle = .white
+        spin.hidesWhenStopped = true
+        spin.translatesAutoresizingMaskIntoConstraints = false
+        return spin
     }()
     
     var inputsContainerViewHeightAnchor: NSLayoutConstraint?
@@ -105,8 +116,8 @@ class LoginViewController: UIViewController {
         view.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
 
         setUpInputContainerView()
-        setUpLogionResgisterButton()
-        setUpLoginRegisterSegmentedControll()
+        setUpLoginRegisterButton()
+        setUpLoginRegisterSegmentedControl()
         setUpProfileImageView()
     }
 
@@ -152,22 +163,30 @@ class LoginViewController: UIViewController {
         nameSeparatorView.leftAnchor.constraint(equalTo: inputsContainerView.leftAnchor).isActive = true
         nameSeparatorView.topAnchor.constraint(equalTo: nameTextField.bottomAnchor).isActive = true
         nameSeparatorView.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor).isActive = true
-        nameSeparatorView.heightAnchor.constraint(equalToConstant: 1)
+        nameSeparatorView.heightAnchor.constraint(equalToConstant: 1).isActive = true
         
         /* Email Separator */
         inputsContainerView.addSubview(emailSeparatorView)
         emailSeparatorView.leftAnchor.constraint(equalTo: inputsContainerView.leftAnchor, constant: 12).isActive = true
         emailSeparatorView.topAnchor.constraint(equalTo: emailTextField.bottomAnchor).isActive = true
         emailSeparatorView.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor).isActive = true
-        emailSeparatorView.heightAnchor.constraint(equalToConstant: 1)
+        emailSeparatorView.heightAnchor.constraint(equalToConstant: 1).isActive = true
     }
     
-    private func setUpLogionResgisterButton() {
+    private func setUpLoginRegisterButton() {
         view.addSubview(loginRegisterButton)
         loginRegisterButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         loginRegisterButton.topAnchor.constraint(equalTo: inputsContainerView.bottomAnchor, constant: 12).isActive = true
         loginRegisterButton.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor).isActive = true
         loginRegisterButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        
+        loginRegisterButton.titleLabel?.text = loginRegisterSegmentedControl.selectedSegmentIndex == 0 ? "Login" : "Register"
+        
+        /* Spinner */
+        loginRegisterButton.addSubview(spinner)
+        spinner.centerXAnchor.constraint(equalTo: loginRegisterButton.centerXAnchor).isActive = true
+        spinner.centerYAnchor.constraint(equalTo: loginRegisterButton.centerYAnchor).isActive = true
+        stopSpinner()
     }
     
     private func setUpProfileImageView() {
@@ -178,16 +197,20 @@ class LoginViewController: UIViewController {
         profileImageView.heightAnchor.constraint(equalToConstant: 100).isActive = true
     }
     
-    func setUpLoginRegisterSegmentedControll() {
+    func setUpLoginRegisterSegmentedControl() {
         view.addSubview(loginRegisterSegmentedControl)
         loginRegisterSegmentedControl.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
         loginRegisterSegmentedControl.bottomAnchor.constraint(equalTo: inputsContainerView.topAnchor, constant: -12).isActive = true
         loginRegisterSegmentedControl.widthAnchor.constraint(equalTo: inputsContainerView.widthAnchor, multiplier: 0.5).isActive = true
         loginRegisterSegmentedControl.heightAnchor.constraint(equalToConstant: 30).isActive = true
     }
-    
-    //MARK:- Actions
+}
+
+//MARK:- Handlers
+extension LoginViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+
     func handleRegisterLogin() {
+        startSpinner()
         if loginRegisterSegmentedControl.selectedSegmentIndex == 0 {
             handleLogin()
         } else {
@@ -198,6 +221,8 @@ class LoginViewController: UIViewController {
     func handleRegister() {
         guard let name = nameTextField.text, let email = emailTextField.text, let password = passwordTextField.text else {
             print("Invalid Form!")
+            self.stopSpinner()
+            self.showAlert(Alert(title: "Required fields are empty!", message: "Please retry", buttons: nil, textBoxes: nil))
             return
         }
         
@@ -205,10 +230,13 @@ class LoginViewController: UIViewController {
             
             if error != nil {
                 print("Error: \(String(describing: error))")
+                self.stopSpinner()
+                self.showAlert(Alert(title: "Failed to Sign Up!", message: "Please retry", buttons: nil, textBoxes: nil))
                 return
             }
             
             guard let uid = user?.uid else {
+                self.stopSpinner()
                 return
             }
             
@@ -219,25 +247,34 @@ class LoginViewController: UIViewController {
             usersRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
                 if err != nil {
                     print(err!)
+                    self.stopSpinner()
+                    self.showAlert(Alert(title: "Failed to Sign Up!", message: "Please retry", buttons: nil, textBoxes: nil))
                     return
                 }
                 
                 print("Saved User Successfully into Firebase DB!")
+                self.stopSpinner()
+                self.dismiss(animated: true, completion: nil)
             })
-            self.dismiss(animated: true, completion: nil)
         }
     }
     
     func handleLogin() {
         guard let email = emailTextField.text, let password = passwordTextField.text else {
             print("Invalid Form!")
+            self.stopSpinner()
             return
         }
+        
         Auth.auth().signIn(withEmail: email, password: password) { (user, error) in
             if error != nil {
                 print("Error: \(String(describing: error?.localizedDescription))")
+                self.stopSpinner()
+                self.showAlert(Alert(title: "Wrong Email or Password!", message: "Please retry", buttons: nil, textBoxes: nil))
+                return
             }
             
+            self.stopSpinner()
             self.dismiss(animated: true, completion: nil)
         }
     }
@@ -274,5 +311,50 @@ class LoginViewController: UIViewController {
             passwordTextFieldHeightAnchor = passwordTextField.heightAnchor.constraint(equalTo: inputsContainerView.heightAnchor, multiplier: 1/3)
             passwordTextFieldHeightAnchor?.isActive = true
         }
+    }
+    
+    func handleSelectProfileImageView() {
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        picker.allowsEditing = true
+        present(picker, animated: true, completion: nil)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        
+        print(info)
+        
+        var selectedImageFromPicker: UIImage?
+        
+        if let editedImage  = info["UIImagePickerControllerEditedImage"] as? UIImage {
+            selectedImageFromPicker = editedImage
+        } else if let originalImage = info["UIImagePickerControllerOriginalImage"] as? UIImage {
+            selectedImageFromPicker = originalImage
+        }
+        
+        if let selectedImage = selectedImageFromPicker {
+            self.profileImageView.image = selectedImage
+            self.profileImageView.layer.borderWidth = 2.0
+            self.profileImageView.layer.borderColor = UIColor.white.cgColor
+        }
+        
+        dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        print("Cancelled Image Picker!")
+        dismiss(animated: true, completion: nil)
+    }
+    
+    func startSpinner() {
+        loginRegisterButton.setTitle("", for: .normal)
+        spinner.startAnimating()
+        view.isUserInteractionEnabled = false
+    }
+    
+    func stopSpinner() {
+        loginRegisterButton.setTitle(loginRegisterSegmentedControl.selectedSegmentIndex == 0 ? "Login" : "Register", for: .normal)
+        spinner.stopAnimating()
+        view.isUserInteractionEnabled = true
     }
 }

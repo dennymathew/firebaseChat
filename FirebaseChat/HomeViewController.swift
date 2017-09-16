@@ -14,22 +14,31 @@ class HomeViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //Logout Button
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(handleLogout))
-        
-        //Handle not Logged In User
-        if Auth.auth().currentUser?.uid == nil {
-            perform(#selector(handleLogout), with: nil, afterDelay: 0)
-        }
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(handleNewMessage))
     }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        checkIfUserIsLoggedIn()
+    }
+    
+    func checkIfUserIsLoggedIn() {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            perform(#selector(handleLogout), with: nil, afterDelay: 0)
+            return
+        }
+        
+        Database.database().reference().child(USERS).child(uid).observe(.value, with: { (snapshot) in
+            if let dictionary = snapshot.value as? [String: Any] {
+                self.navigationItem.title = dictionary[NAME] as? String
+            }
+        }) { (error) in
+            print(error)
+        }
     }
     
     func handleLogout() {
-        
-        /* Logout User */
         do {
             try Auth.auth().signOut()
         } catch let logoutError {
@@ -41,14 +50,9 @@ class HomeViewController: UITableViewController {
         present(loginController, animated: true, completion: nil)
     }
     
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+    func handleNewMessage() {
+        let newMessageController = NewMessageViewController()
+        let navController = UINavigationController(rootViewController: newMessageController)
+        present(navController, animated: true, completion: nil)
     }
-    */
-
 }
