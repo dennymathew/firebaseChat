@@ -15,11 +15,14 @@
 		EF19FB8A1F63BC5A00301111 /* FirebaseChat.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EF19FB881F63BC5A00301111 /* FirebaseChat.xcdatamodeld */; };
 		EF19FB8F1F63BC5A00301111 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EF19FB8D1F63BC5A00301111 /* LaunchScreen.storyboard */; };
 		EF19FB971F63BC8000301111 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF19FB961F63BC8000301111 /* HomeViewController.swift */; };
+		EF2787B81F6DA7D300B731D5 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2787B71F6DA7D300B731D5 /* Message.swift */; };
 		EF3BAB071F64055700DE870D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EF3BAB061F63FE6D00DE870D /* GoogleService-Info.plist */; };
 		EF3BAB0A1F6440B400DE870D /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF3BAB091F6440B400DE870D /* Constants.swift */; };
 		EF3BAB0C1F650AF900DE870D /* NewMessageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF3BAB0B1F650AF900DE870D /* NewMessageViewController.swift */; };
 		EF3BAB0F1F650E0B00DE870D /* BaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF3BAB0E1F650E0B00DE870D /* BaseViewController.swift */; };
+		EF5176681F6DB2340000E8E0 /* UserCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF5176671F6DB2340000E8E0 /* UserCell.swift */; };
 		EF665DD11F63C19900D2DCAD /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF665DD01F63C19900D2DCAD /* Extensions.swift */; };
+		EF6A4F691F6D85E0006A5003 /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6A4F681F6D85E0006A5003 /* ChatViewController.swift */; };
 		EFD2185A1F63F7650070695B /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD218591F63F7650070695B /* User.swift */; };
 /* End PBXBuildFile section */
 
@@ -34,12 +37,15 @@
 		EF19FB8E1F63BC5A00301111 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		EF19FB901F63BC5A00301111 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		EF19FB961F63BC8000301111 /* HomeViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
+		EF2787B71F6DA7D300B731D5 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		EF3BAB061F63FE6D00DE870D /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		EF3BAB091F6440B400DE870D /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		EF3BAB0B1F650AF900DE870D /* NewMessageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMessageViewController.swift; sourceTree = "<group>"; };
 		EF3BAB0D1F650D4C00DE870D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EF3BAB0E1F650E0B00DE870D /* BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewController.swift; sourceTree = "<group>"; };
+		EF5176671F6DB2340000E8E0 /* UserCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserCell.swift; sourceTree = "<group>"; };
 		EF665DD01F63C19900D2DCAD /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		EF6A4F681F6D85E0006A5003 /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
 		EFD218591F63F7650070695B /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		FFECCC0A04C30032CC83B5C9 /* Pods-FirebaseChat.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FirebaseChat.debug.xcconfig"; path = "Pods/Target Support Files/Pods-FirebaseChat/Pods-FirebaseChat.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -94,6 +100,7 @@
 		EF19FB801F63BC5A00301111 /* FirebaseChat */ = {
 			isa = PBXGroup;
 			children = (
+				EF5176661F6DB2170000E8E0 /* Views */,
 				EF3BAB081F6440A600DE870D /* Utilities */,
 				EF19FB981F63BC8600301111 /* Application */,
 				EF19FB991F63BC9100301111 /* Controllers */,
@@ -120,6 +127,7 @@
 			isa = PBXGroup;
 			children = (
 				EF0B44BB1F63BEFF005DA4A9 /* LoginViewController.swift */,
+				EF6A4F681F6D85E0006A5003 /* ChatViewController.swift */,
 				EF19FB961F63BC8000301111 /* HomeViewController.swift */,
 				EF3BAB0B1F650AF900DE870D /* NewMessageViewController.swift */,
 			);
@@ -144,6 +152,14 @@
 			name = Utilities;
 			sourceTree = "<group>";
 		};
+		EF5176661F6DB2170000E8E0 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				EF5176671F6DB2340000E8E0 /* UserCell.swift */,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
 		EF665DCF1F63C18B00D2DCAD /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
@@ -156,6 +172,7 @@
 			isa = PBXGroup;
 			children = (
 				EFD218591F63F7650070695B /* User.swift */,
+				EF2787B71F6DA7D300B731D5 /* Message.swift */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -290,7 +307,10 @@
 				EFD2185A1F63F7650070695B /* User.swift in Sources */,
 				EF19FB971F63BC8000301111 /* HomeViewController.swift in Sources */,
 				EF3BAB0A1F6440B400DE870D /* Constants.swift in Sources */,
+				EF6A4F691F6D85E0006A5003 /* ChatViewController.swift in Sources */,
+				EF2787B81F6DA7D300B731D5 /* Message.swift in Sources */,
 				EF3BAB0F1F650E0B00DE870D /* BaseViewController.swift in Sources */,
+				EF5176681F6DB2340000E8E0 /* UserCell.swift in Sources */,
 				EF19FB821F63BC5A00301111 /* AppDelegate.swift in Sources */,
 				EF19FB8A1F63BC5A00301111 /* FirebaseChat.xcdatamodeld in Sources */,
 				EF3BAB0C1F650AF900DE870D /* NewMessageViewController.swift in Sources */,
