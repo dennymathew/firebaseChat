@@ -98,7 +98,7 @@
 				EF19FB981F63BC8600301111 /* Application */,
 				EF19FB991F63BC9100301111 /* Controllers */,
 				EFD218581F63F7490070695B /* Models */,
-				EF665DCF1F63C18B00D2DCAD /* Extensions */,
+				EF665DCF1F63C18B00D2DCAD /* Helpers */,
 				EF19FB851F63BC5A00301111 /* Main.storyboard */,
 				EF19FB8D1F63BC5A00301111 /* LaunchScreen.storyboard */,
 				EF19FB9A1F63BCAA00301111 /* Supporting Files */,
@@ -144,12 +144,12 @@
 			name = Utilities;
 			sourceTree = "<group>";
 		};
-		EF665DCF1F63C18B00D2DCAD /* Extensions */ = {
+		EF665DCF1F63C18B00D2DCAD /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
 				EF665DD01F63C19900D2DCAD /* Extensions.swift */,
 			);
-			name = Extensions;
+			name = Helpers;
 			sourceTree = "<group>";
 		};
 		EFD218581F63F7490070695B /* Models */ = {

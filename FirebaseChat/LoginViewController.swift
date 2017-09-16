@@ -53,6 +53,8 @@ class LoginViewController: BaseViewController {
         let tf = UITextField()
         tf.placeholder = "Email Address"
         tf.keyboardType = .emailAddress
+        tf.autocapitalizationType = .none
+        tf.autocorrectionType = .no
         tf.translatesAutoresizingMaskIntoConstraints = false
         return tf
     }()
@@ -99,6 +101,8 @@ class LoginViewController: BaseViewController {
         return spin
     }()
     
+    var homeVC = HomeViewController()
+    var profileImageAdded = false
     var inputsContainerViewHeightAnchor: NSLayoutConstraint?
     var nameTextFieldHeightAnchor: NSLayoutConstraint?
     var emailTextFieldHeightAnchor: NSLayoutConstraint?
@@ -226,6 +230,13 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
             return
         }
         
+        if !profileImageAdded {
+            self.stopSpinner()
+            self.showAlert(Alert(title: "Please add your Profile Image!", message: "", buttons: nil, textBoxes: nil))
+            return
+        }
+        
+        
         Auth.auth().createUser(withEmail: email, password: password) { (user, error) in
             
             if error != nil {
@@ -240,23 +251,44 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
                 return
             }
             
-            //SUccess Signing Up
-            let ref = Database.database().reference(fromURL: FIREBASE_DB_URL)
-            let usersRef = ref.child(USERS).child(uid)
-            let values = [NAME: name, EMAIL: email]
-            usersRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
-                if err != nil {
-                    print(err!)
-                    self.stopSpinner()
-                    self.showAlert(Alert(title: "Failed to Sign Up!", message: "Please retry", buttons: nil, textBoxes: nil))
-                    return
-                }
-                
-                print("Saved User Successfully into Firebase DB!")
-                self.stopSpinner()
-                self.dismiss(animated: true, completion: nil)
-            })
+            //If Success Signing Up, Add profile Image
+            let storageRef = Storage.storage().reference().child(PROFILE_IMAGES).child("\(uid).jpg")
+            if let profileImage = self.profileImageView.image, let uploadData = UIImageJPEGRepresentation(profileImage.reducedSize(), 0.8) {
+                storageRef.putData(uploadData, metadata: nil, completion: { (metadata, error) in
+                    if error != nil {
+                        print(error!)
+                        return
+                    }
+                    
+                    if let profileImageUrl = metadata?.downloadURL()?.absoluteString {
+                        let values = [NAME: name, EMAIL: email, PROFILE_IMAGE_URL: profileImageUrl] as [String : Any]
+                        self.registerUserIntoDatabase(with: uid, values: values)
+                    }
+                })
+            }
         }
+    }
+    
+    private func registerUserIntoDatabase(with uid: String, values: [String: Any]) {
+        
+        let ref = Database.database().reference(fromURL: FIREBASE_DB_URL)
+        let usersRef = ref.child(USERS).child(uid)
+        
+        usersRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
+            if err != nil {
+                print(err!)
+                self.stopSpinner()
+                self.showAlert(Alert(title: "Failed to Sign Up!", message: "Please retry", buttons: nil, textBoxes: nil))
+                return
+            }
+            
+            print("Saved User Successfully into Firebase DB!")
+            let user = User()
+            user.setValuesForKeys(values)
+            self.homeVC.setUpNavBar(with: user)
+            self.stopSpinner()
+            self.dismiss(animated: true, completion: nil)
+        })
     }
     
     func handleLogin() {
@@ -274,6 +306,7 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
                 return
             }
             
+            self.homeVC.fetchUserAndSetUpNavBar()
             self.stopSpinner()
             self.dismiss(animated: true, completion: nil)
         }
@@ -336,6 +369,7 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
             self.profileImageView.image = selectedImage
             self.profileImageView.layer.borderWidth = 2.0
             self.profileImageView.layer.borderColor = UIColor.white.cgColor
+            self.profileImageAdded = true
         }
         
         dismiss(animated: true, completion: nil)
