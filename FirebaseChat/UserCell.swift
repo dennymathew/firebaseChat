@@ -11,19 +11,11 @@ import Firebase
 
 class UserCell: UITableViewCell {
     
+    //MARK:- Properties
     var message: Message? {
         didSet {
-            if let uid = message?.toId {
-                let userRef = Database.database().reference().child(USERS).child(uid)
-                userRef.observeSingleEvent(of: .value, with: { (snapshot) in
-                    if let dictionary = snapshot.value as? [String: Any] {
-                        self.textLabel?.text = dictionary[NAME] as? String
-                        if let profileImageUrl = dictionary[PROFILE_IMAGE_URL] as? String {
-                            self.profileImageView.loadImageFromChache(with: profileImageUrl)
-                        }
-                    }
-                })
-            }
+            
+            setUpNameAndProfileImage()
             
             if let text = message?.text {
                 detailTextLabel?.text = text
@@ -35,8 +27,6 @@ class UserCell: UITableViewCell {
                 dateFormatter.dateFormat = "hh:mm:ss a"
                 timeLabel.text = dateFormatter.string(from: timeSTampDate)
             }
-            
-            
         }
     }
     
@@ -74,6 +64,7 @@ class UserCell: UITableViewCell {
         return label
     }()
     
+    //MARK:- Initializers
     override func layoutSubviews() {
         super.layoutSubviews()
         
@@ -93,11 +84,29 @@ class UserCell: UITableViewCell {
         addSubview(timeLabel)
         timeLabel.rightAnchor.constraint(equalTo: self.rightAnchor).isActive = true
         timeLabel.topAnchor.constraint(equalTo: self.topAnchor, constant: 18).isActive = true
-        timeLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        timeLabel.widthAnchor.constraint(equalToConstant: 80).isActive = true
         timeLabel.heightAnchor.constraint(equalTo: (textLabel?.heightAnchor)!).isActive = true
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    //MARK:- Methods
+    private func setUpNameAndProfileImage() {
+        
+        guard let chatPartnerId = message?.fromId == Auth.auth().currentUser?.uid ? message?.toId : message?.fromId else {
+            return
+        }
+        
+        let userRef = Database.database().reference().child(USERS).child(chatPartnerId)
+        userRef.observeSingleEvent(of: .value, with: { (snapshot) in
+        if let dictionary = snapshot.value as? [String: Any] {
+            self.textLabel?.text = dictionary[NAME] as? String
+                if let profileImageUrl = dictionary[PROFILE_IMAGE_URL] as? String {
+                    self.profileImageView.loadImageFromChache(with: profileImageUrl)
+                }
+            }
+        })
     }
 }

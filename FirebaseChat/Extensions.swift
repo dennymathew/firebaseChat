@@ -31,8 +31,12 @@ extension UIImageView {
         
         /* Check Cache for Image */
         if let cacheimage = imageCache.object(forKey: urlString as NSString) {
-            self.image = cacheimage
-            spinner.removeFromSuperview()
+            
+            DispatchQueue.main.async {
+                self.image = cacheimage
+                spinner.removeFromSuperview()
+            }
+            
             return
         }
         
@@ -41,7 +45,9 @@ extension UIImageView {
         URLSession.shared.dataTask(with: url!, completionHandler: { (data, response, error) in
             if error != nil {
                 print(error as Any)
-                spinner.removeFromSuperview()
+                DispatchQueue.main.async {
+                    spinner.removeFromSuperview()
+                }
                 return
             }
             

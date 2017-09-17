@@ -14,7 +14,6 @@ class HomeViewController: UITableViewController {
     let cellId = "cellId"
     var messages = [Message]()
     var messageDictionary = [String: Message]()
-    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,7 +22,6 @@ class HomeViewController: UITableViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(handleLogout))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(handleNewMessage))
         tableView.register(UserCell.self, forCellReuseIdentifier: cellId)
-        observeMessages()
     }
     
     func checkIfUserIsLoggedIn() {
@@ -53,6 +51,14 @@ class HomeViewController: UITableViewController {
     }
     
     func setUpNavBar(with user: User) {
+        
+        self.messages.removeAll()
+        self.messageDictionary.removeAll()
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
+        
+        observeUserMessages()
         
         let titleView: UIView = {
             let view = UIView()
@@ -113,27 +119,40 @@ class HomeViewController: UITableViewController {
         titleView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showChatLogController)))
     }
     
-    func observeMessages() {
-        let messageRef = Database.database().reference().child(MESSAGES)
-        messageRef.observe(.childAdded, with: { (snapshot) in
-            if let dictionary = snapshot.value as? [String: Any] {
-                let message = Message()
-                message.setValuesForKeys(dictionary)
-                if let toId = message.toId {
-                    self.messageDictionary[toId] = message
+    func observeUserMessages() {
+        
+        guard let uid = Auth.auth().currentUser?.uid else {
+            return
+        }
+        
+        print("LOGGED IN USER ID: \(uid)")
+        let userMessageRef = Database.database().reference().child(USER_MESSAGES).child(uid)
+        userMessageRef.observe(.childAdded, with: { (snapshot) in
+            let messageId = snapshot.key
+            print("MESSAGE ID:- \(messageId)")
+            let messageRef = Database.database().reference().child(MESSAGES).child(messageId)
+            messageRef.observeSingleEvent(of: .value, with: { (snapshot) in
+                if let dictionary = snapshot.value as? [String: Any] {
+                    let message = Message()
+                    message.setValuesForKeys(dictionary)
+                    
+                    guard let chatPartnerId = message.fromId == Auth.auth().currentUser?.uid ? message.toId : message.fromId else {
+                        return
+                    }
+                    
+                    self.messageDictionary[chatPartnerId] = message
                     self.messages = Array(self.messageDictionary.values)
                     self.messages.sort(by: { (message1, message2) -> Bool in
-                        return Int((message1.timeStamp)!) > Int((message2.timeStamp)!)
+                        return Int(message1.timeStamp!) > Int(message2.timeStamp!)
                     })
+                    
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                    }
                 }
-                
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
-            }
-        }) { (error) in
-            print(error)
-        }
+            }, withCancel: nil)
+            
+        }, withCancel: nil)
     }
 }
 
@@ -141,6 +160,7 @@ class HomeViewController: UITableViewController {
 extension HomeViewController {
     
     func handleLogout() {
+        
         do {
             try Auth.auth().signOut()
         } catch let logoutError {
@@ -181,5 +201,25 @@ extension HomeViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! UserCell
         cell.message = messages[indexPath.row]
         return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let chatController = ChatViewController(collectionViewLayout: UICollectionViewFlowLayout())
+        let message = messages[indexPath.row]
+        let partnerUid = message.fromId == Auth.auth().currentUser?.uid ? message.toId! : message.fromId!
+        Database.database().reference().child(USERS).child(partnerUid).observe(.value, with: { (snapshot) in
+            if let dictionary = snapshot.value as? [String: Any] {
+                let partner = User()
+                partner.id = partnerUid
+                partner.setValuesForKeys(dictionary)
+                chatController.user = partner
+                chatController.setUpNavBar(with: partner)
+                DispatchQueue.main.async {
+                    self.navigationController?.show(chatController, sender: self)
+                }
+            }
+        }) { (error) in
+            print(error)
+        }
     }
 }
