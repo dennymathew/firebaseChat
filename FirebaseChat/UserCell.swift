@@ -58,7 +58,7 @@ class UserCell: UITableViewCell {
     let timeLabel: UILabel = {
         let label = UILabel()
         label.text = ""
-        label.textColor = UIColor.lightGray
+        label.textColor = Theme.timeLabelColor
         label.font = UIFont.systemFont(ofSize: 11.0)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -95,15 +95,15 @@ class UserCell: UITableViewCell {
     //MARK:- Methods
     private func setUpNameAndProfileImage() {
         
-        guard let chatPartnerId = message?.fromId == Auth.auth().currentUser?.uid ? message?.toId : message?.fromId else {
+        guard let partnerId = message?.chatPartnerId() else {
             return
         }
         
-        let userRef = Database.database().reference().child(USERS).child(chatPartnerId)
+        let userRef = Database.database().reference().child(Keys.users).child(partnerId)
         userRef.observeSingleEvent(of: .value, with: { (snapshot) in
         if let dictionary = snapshot.value as? [String: Any] {
-            self.textLabel?.text = dictionary[NAME] as? String
-                if let profileImageUrl = dictionary[PROFILE_IMAGE_URL] as? String {
+            self.textLabel?.text = dictionary[Keys.name] as? String
+                if let profileImageUrl = dictionary[Keys.profileImageUrl] as? String {
                     self.profileImageView.loadImageFromChache(with: profileImageUrl)
                 }
             }

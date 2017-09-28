@@ -25,8 +25,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window = UIWindow(frame: UIScreen.main.bounds)
         window?.makeKeyAndVisible()
         let navController = UINavigationController(rootViewController: HomeViewController())
-        navController.navigationBar.barTintColor = #colorLiteral(red: 0.2745098174, green: 0.4862745106, blue: 0.1411764771, alpha: 1)
-        navController.navigationBar.tintColor = #colorLiteral(red: 0.9529411793, green: 0.6862745285, blue: 0.1333333403, alpha: 1)
+        navController.navigationBar.barTintColor = Theme.navigationBarTintColor
+        navController.navigationBar.tintColor = Theme.navigationItemTintColor
         window?.rootViewController = navController
         
         return true

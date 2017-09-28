@@ -25,7 +25,7 @@ class NewMessageViewController: UITableViewController {
     }
     
     func fetchUsers() {
-        Database.database().reference().child(USERS).observe(.childAdded, with: { (snapshot) in
+        Database.database().reference().child(Keys.users).observe(.childAdded, with: { (snapshot) in
             if let dictionary = snapshot.value as? [String: Any] {
                 let user = User()
                 user.id = snapshot.key
@@ -37,7 +37,7 @@ class NewMessageViewController: UITableViewController {
                 }
             }
         }) { (error) in
-            print("ERROR: - \(error)")
+            DLog("ERROR: - \(error)")
         }
     }
     

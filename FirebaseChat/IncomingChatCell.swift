@@ -6,16 +6,13 @@
 //  Copyright © 2017 Cabot. All rights reserved.
 //
 
+import Foundation
 import UIKit
 import Firebase
 
 class IncomingChatCell: UICollectionViewCell {
     
     var bubbleViewWidthAnchor: NSLayoutConstraint?
-    var bubbleViewLeftAnchor: NSLayoutConstraint?
-    var bubbleViewRightAnchor: NSLayoutConstraint?
-    var timeLabelRightAnchor: NSLayoutConstraint?
-    var timeLabelLeftAnchor: NSLayoutConstraint?
     
     var message: Message? {
         didSet {
@@ -31,6 +28,20 @@ class IncomingChatCell: UICollectionViewCell {
             }
             
             //TODO: Add Profile Image
+            if let uid = message?.fromId {
+                Database.database().reference().child(Keys.users).child(uid).observe(.value, with: { (snapshot) in
+                    if let dictionary = snapshot.value as? [String: Any] {
+                        let user = User()
+                        user.id = uid
+                        user.setValuesForKeys(dictionary)
+                        if let profileImageUrl = user.profileImageUrl {
+                            self.profileImageView.loadImageFromChache(with: profileImageUrl)
+                        }
+                    }
+                }) { (error) in
+                    DLog(error)
+                }
+            }
         }
     }
    
@@ -75,76 +86,39 @@ class IncomingChatCell: UICollectionViewCell {
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = Theme.chatBackgroundColor
-        
-        if self.reuseIdentifier == "outCell" {
-            setUpOutgoingChatView()
-        } else {
-            setUpIncomingChatView()
-        }
+        setUpViews()
     }
     
-
-    func setUpOutgoingChatView() {
-        
-        addSubview(timeLabel)
-        addSubview(bubbleView)
-        bubbleView.addSubview(textView)
-        
-        /* Time Label Constraints */
-        timeLabelRightAnchor?.isActive = false
-        timeLabelRightAnchor = timeLabel.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -8)
-        timeLabelRightAnchor?.isActive = true
-        timeLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -8).isActive = true
-        
-        /* BubbleView Constraints */
-        bubbleViewWidthAnchor?.isActive = false
-        bubbleViewWidthAnchor = bubbleView.widthAnchor.constraint(equalToConstant: 200)
-        bubbleViewWidthAnchor?.isActive = true
-        bubbleViewRightAnchor?.isActive = false
-        bubbleViewRightAnchor = bubbleView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: -2)
-        bubbleViewRightAnchor?.isActive = true
-        bubbleView.backgroundColor = Theme.sentChatBubbleColor
-        textView.textColor = Theme.sentChatTextColor
-        
-        /* TextView Constraints */
-        textView.rightAnchor.constraint(equalTo: bubbleView.rightAnchor, constant: -8).isActive = true
-        textView.leftAnchor.constraint(equalTo: bubbleView.leftAnchor, constant: 8).isActive = true
-        textView.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 3).isActive = true
-        textView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -5).isActive = true
-    }
-    
-    func setUpIncomingChatView() {
+    func setUpViews() {
         
         addSubview(timeLabel)
         addSubview(bubbleView)
         bubbleView.addSubview(textView)
         addSubview(profileImageView)
         
-        //Profile Image View
+        /* Profile Image View Constraints */
         profileImageView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 4).isActive = true
-        profileImageView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -8).isActive = true
+        profileImageView.bottomAnchor.constraint(equalTo: timeLabel.topAnchor, constant: -5).isActive = true
         profileImageView.widthAnchor.constraint(equalToConstant: 32).isActive = true
         profileImageView.heightAnchor.constraint(equalToConstant: 32).isActive = true
-        profileImageView.alpha = 1.0
         
-        //Time Label
-        timeLabelLeftAnchor?.isActive = false
-        timeLabelLeftAnchor = timeLabel.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 42)
-        timeLabelLeftAnchor?.isActive = true
-        timeLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -8).isActive = true
-        timeLabel.text = message?.timeStamp?.toTimeString("hh:mm a")
+        /* Time Label Constraints */
+        timeLabel.leftAnchor.constraint(equalTo: profileImageView.rightAnchor, constant: 12).isActive = true
+        timeLabel.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -10).isActive = true
         
-        //Bubble View
-        bubbleViewWidthAnchor?.isActive = false
-        bubbleViewWidthAnchor = bubbleView.widthAnchor.constraint(equalToConstant: 200)
-        bubbleViewWidthAnchor?.isActive = true
-        bubbleViewLeftAnchor?.isActive = false
-        bubbleViewLeftAnchor = bubbleView.leftAnchor.constraint(equalTo: profileImageView.rightAnchor, constant: 8)
-        bubbleViewLeftAnchor?.isActive = true
-        bubbleView.backgroundColor = Theme.receivedChatBubbleColor
-        textView.textColor = Theme.receivedChatTextColor
+        /* BubbleView Constraints */
+        bubbleView.widthAnchor.constraint(equalToConstant: 200).isActive = true
+        bubbleView.leftAnchor.constraint(equalTo: profileImageView.rightAnchor, constant: 5).isActive = true
         bubbleView.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
         bubbleView.bottomAnchor.constraint(equalTo: timeLabel.topAnchor, constant: -5).isActive = true
+        bubbleView.backgroundColor = Theme.receivedChatBubbleColor
+        
+        /* TextView Constraints */
+        textView.rightAnchor.constraint(equalTo: bubbleView.rightAnchor, constant: -8).isActive = true
+        textView.leftAnchor.constraint(equalTo: bubbleView.leftAnchor, constant: 8).isActive = true
+        textView.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 3).isActive = true
+        textView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -5).isActive = true
+        textView.textColor = Theme.receivedChatTextColor
     }
     
     required init?(coder aDecoder: NSCoder) {

@@ -11,12 +11,6 @@ import UIKit
 
 let imageCache = NSCache<NSString, UIImage>()
 
-extension UIColor {
-    convenience init(r: CGFloat, g: CGFloat, b: CGFloat) {
-        self.init(displayP3Red: r/255, green: g/255, blue: b/255, alpha: 1)
-    }
-}
-
 extension UIImageView {
     func loadImageFromChache(with urlString: String) {
         
@@ -44,7 +38,7 @@ extension UIImageView {
         let url = URL(string: urlString)
         URLSession.shared.dataTask(with: url!, completionHandler: { (data, response, error) in
             if error != nil {
-                print(error as Any)
+                DLog(error as Any)
                 DispatchQueue.main.async {
                     spinner.removeFromSuperview()
                 }
@@ -108,8 +102,33 @@ extension UIImage {
         }
         
         else {
-            print("Failed to reduce image size!")
+            DLog("Failed to reduce image size!")
             return self
         }
+    }
+}
+
+extension String {
+    func estimatedFrame() -> CGRect {
+        let size = CGSize(width: 200, height: 1000)
+        let options = NSStringDrawingOptions.usesFontLeading.union(.usesLineFragmentOrigin)
+        return NSString(string: self).boundingRect(with: size, options: options, attributes: [NSFontAttributeName: UIFont.systemFont(ofSize: 16)], context: nil)
+    }
+    
+    //MARK:- First Character from String:- For Swift 3.0/Xcode 8.3
+    func first() -> String {
+        if self.characters.count > 0 {
+            return "\(self.characters.first!)"
+        }
+        else { return "" }
+    }
+}
+
+extension NSNumber {
+    func toTimeString(_ format: String) -> String {
+        let timeStampDate = Date(timeIntervalSince1970: self.doubleValue)
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = format
+        return dateFormatter.string(from: timeStampDate)
     }
 }

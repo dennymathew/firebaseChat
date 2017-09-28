@@ -10,9 +10,8 @@ import UIKit
 import Firebase
 
 class LoginViewController: BaseViewController {
-    /*---------------------------------------------*/
-                    //MARK:- Properties
-    /*---------------------------------------------*/
+    
+    //MARK:- Properties
     let inputsContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)
@@ -112,9 +111,7 @@ class LoginViewController: BaseViewController {
         return .lightContent
     }
     
-    /*---------------------------------------------*/
-        //MARK:- View Controller Life Cycle
-    /*---------------------------------------------*/
+    //MARK:- View Controller Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
@@ -125,9 +122,7 @@ class LoginViewController: BaseViewController {
         setUpProfileImageView()
     }
 
-    /*---------------------------------------------*/
-                //MARK:- Set Up Methods
-    /*---------------------------------------------*/
+    //MARK:- Set Up Methods
     private func setUpInputContainerView() {
         
         /* Container View */
@@ -224,7 +219,7 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
     
     func handleRegister() {
         guard let name = nameTextField.text, let email = emailTextField.text, let password = passwordTextField.text else {
-            print("Invalid Form!")
+            DLog("Invalid Form!")
             self.stopSpinner()
             self.showAlert(Alert(title: "Required fields are empty!", message: "Please retry", buttons: nil, textBoxes: nil))
             return
@@ -240,7 +235,7 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
         Auth.auth().createUser(withEmail: email, password: password) { (user, error) in
             
             if error != nil {
-                print("Error: \(String(describing: error))")
+                DLog("Error: \(String(describing: error))")
                 self.stopSpinner()
                 self.showAlert(Alert(title: "Failed to Sign Up!", message: "Please retry", buttons: nil, textBoxes: nil))
                 return
@@ -252,16 +247,16 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
             }
             
             //If Success Signing Up, Add profile Image
-            let storageRef = Storage.storage().reference().child(PROFILE_IMAGES).child("\(uid).jpg")
+            let storageRef = Storage.storage().reference().child(Keys.profileImages).child("\(uid).jpg")
             if let profileImage = self.profileImageView.image, let uploadData = UIImageJPEGRepresentation(profileImage.reducedSize(), 0.8) {
                 storageRef.putData(uploadData, metadata: nil, completion: { (metadata, error) in
                     if error != nil {
-                        print(error!)
+                        DLog(error!)
                         return
                     }
                     
                     if let profileImageUrl = metadata?.downloadURL()?.absoluteString {
-                        let values = [NAME: name, EMAIL: email, PROFILE_IMAGE_URL: profileImageUrl] as [String : Any]
+                        let values = [Keys.name: name, Keys.email: email, Keys.profileImageUrl: profileImageUrl] as [String : Any]
                         self.registerUserIntoDatabase(with: uid, values: values)
                     }
                 })
@@ -271,18 +266,18 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
     
     private func registerUserIntoDatabase(with uid: String, values: [String: Any]) {
         
-        let ref = Database.database().reference(fromURL: FIREBASE_DB_URL)
-        let usersRef = ref.child(USERS).child(uid)
+        let ref = Database.database().reference()
+        let usersRef = ref.child(Keys.users).child(uid)
         
         usersRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
             if err != nil {
-                print(err!)
+                DLog(err!)
                 self.stopSpinner()
                 self.showAlert(Alert(title: "Failed to Sign Up!", message: "Please retry", buttons: nil, textBoxes: nil))
                 return
             }
             
-            print("Saved User Successfully into Firebase DB!")
+            DLog("Saved User Successfully into Firebase DB!")
             let user = User()
             user.setValuesForKeys(values)
             self.homeVC.setUpNavBar(with: user)
@@ -293,14 +288,14 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
     
     func handleLogin() {
         guard let email = emailTextField.text, let password = passwordTextField.text else {
-            print("Invalid Form!")
+            DLog("Invalid Form!")
             self.stopSpinner()
             return
         }
         
         Auth.auth().signIn(withEmail: email, password: password) { (user, error) in
             if error != nil {
-                print("Error: \(String(describing: error?.localizedDescription))")
+                DLog("Error: \(String(describing: error?.localizedDescription))")
                 self.stopSpinner()
                 self.showAlert(Alert(title: "Wrong Email or Password!", message: "Please retry", buttons: nil, textBoxes: nil))
                 return
@@ -355,7 +350,7 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         
-        print(info)
+        DLog(info)
         
         var selectedImageFromPicker: UIImage?
         
@@ -368,7 +363,7 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
         if let selectedImage = selectedImageFromPicker {
             self.profileImageView.image = selectedImage
             self.profileImageView.layer.borderWidth = 2.0
-            self.profileImageView.layer.borderColor = UIColor.white.cgColor
+            self.profileImageView.layer.borderColor = Theme.profileImageBorderColor
             self.profileImageAdded = true
         }
         
@@ -376,7 +371,7 @@ extension LoginViewController: UIImagePickerControllerDelegate, UINavigationCont
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        print("Cancelled Image Picker!")
+        DLog("Cancelled Image Picker!")
         dismiss(animated: true, completion: nil)
     }
     

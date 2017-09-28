@@ -14,6 +14,7 @@ class HomeViewController: UITableViewController {
     let cellId = "cellId"
     var messages = [Message]()
     var messageDictionary = [String: Message]()
+    var timer: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,7 +39,7 @@ class HomeViewController: UITableViewController {
             return
         }
         
-        Database.database().reference().child(USERS).child(uid).observe(.value, with: { (snapshot) in
+        Database.database().reference().child(Keys.users).child(uid).observe(.value, with: { (snapshot) in
             if let dictionary = snapshot.value as? [String: Any] {
                 let user = User()
                 user.id = uid
@@ -46,7 +47,7 @@ class HomeViewController: UITableViewController {
                 self.setUpNavBar(with: user)
             }
         }) { (error) in
-            print(error)
+            DLog(error)
         }
     }
     
@@ -125,18 +126,18 @@ class HomeViewController: UITableViewController {
             return
         }
         
-        print("LOGGED IN USER ID: \(uid)")
-        let userMessageRef = Database.database().reference().child(USER_MESSAGES).child(uid)
+        DLog("LOGGED IN USER ID: \(uid)")
+        let userMessageRef = Database.database().reference().child(Keys.userMessages).child(uid)
         userMessageRef.observe(.childAdded, with: { (snapshot) in
             let messageId = snapshot.key
-            print("MESSAGE ID:- \(messageId)")
-            let messageRef = Database.database().reference().child(MESSAGES).child(messageId)
+            DLog("MESSAGE ID:- \(messageId)")
+            let messageRef = Database.database().reference().child(Keys.messages).child(messageId)
             messageRef.observeSingleEvent(of: .value, with: { (snapshot) in
                 if let dictionary = snapshot.value as? [String: Any] {
                     let message = Message()
                     message.setValuesForKeys(dictionary)
                     
-                    guard let chatPartnerId = message.fromId == Auth.auth().currentUser?.uid ? message.toId : message.fromId else {
+                    guard let chatPartnerId = message.chatPartnerId() else {
                         return
                     }
                     
@@ -146,13 +147,18 @@ class HomeViewController: UITableViewController {
                         return Int(message1.timeStamp!) > Int(message2.timeStamp!)
                     })
                     
-                    DispatchQueue.main.async {
-                        self.tableView.reloadData()
-                    }
+                    self.timer?.invalidate()
+                    self.timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.handleReloadTable), userInfo: nil, repeats: false)
                 }
             }, withCancel: nil)
             
         }, withCancel: nil)
+    }
+    
+    func handleReloadTable() {
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
     }
 }
 
@@ -164,7 +170,7 @@ extension HomeViewController {
         do {
             try Auth.auth().signOut()
         } catch let logoutError {
-            print(logoutError)
+            DLog(logoutError)
         }
         
         let loginController = LoginViewController()
@@ -206,11 +212,15 @@ extension HomeViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let chatController = ChatViewController(collectionViewLayout: UICollectionViewFlowLayout())
         let message = messages[indexPath.row]
-        let partnerUid = message.fromId == Auth.auth().currentUser?.uid ? message.toId! : message.fromId!
-        Database.database().reference().child(USERS).child(partnerUid).observe(.value, with: { (snapshot) in
+        
+        guard let partnerId = message.chatPartnerId() else {
+            return
+        }
+        
+        Database.database().reference().child(Keys.users).child(partnerId).observe(.value, with: { (snapshot) in
             if let dictionary = snapshot.value as? [String: Any] {
                 let partner = User()
-                partner.id = partnerUid
+                partner.id = partnerId
                 partner.setValuesForKeys(dictionary)
                 chatController.user = partner
                 chatController.setUpNavBar(with: partner)
@@ -219,7 +229,7 @@ extension HomeViewController {
                 }
             }
         }) { (error) in
-            print(error)
+            DLog(error)
         }
     }
 }
