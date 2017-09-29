@@ -13,6 +13,7 @@ import Firebase
 class IncomingChatCell: UICollectionViewCell {
     
     var bubbleViewWidthAnchor: NSLayoutConstraint?
+    var chatViewController: ChatViewController?
     
     var message: Message? {
         didSet {
@@ -21,6 +22,13 @@ class IncomingChatCell: UICollectionViewCell {
                 bubbleViewWidthAnchor?.isActive = false
                 bubbleViewWidthAnchor?.constant = (message?.text!.estimatedFrame().width)! + 40
                 bubbleViewWidthAnchor?.isActive = true
+            }
+            
+            if let imageUrl = message?.imageUrl {
+                messageImageView.loadImageFromChache(with: imageUrl)
+                messageImageView.isHidden = false
+            } else {
+                messageImageView.isHidden = true
             }
             
             if let timeStamp = message?.timeStamp?.toTimeString("hh:mm a") {
@@ -83,6 +91,18 @@ class IncomingChatCell: UICollectionViewCell {
         return imageView
     }()
     
+    lazy var messageImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.layer.cornerRadius = 16
+        imageView.layer.masksToBounds = true
+        imageView.contentMode = .scaleAspectFill
+        imageView.isUserInteractionEnabled = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleZoomTap)))
+
+        return imageView
+    }()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = Theme.chatBackgroundColor
@@ -95,6 +115,7 @@ class IncomingChatCell: UICollectionViewCell {
         addSubview(bubbleView)
         bubbleView.addSubview(textView)
         addSubview(profileImageView)
+        bubbleView.addSubview(messageImageView)
         
         /* Profile Image View Constraints */
         profileImageView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: 4).isActive = true
@@ -119,6 +140,18 @@ class IncomingChatCell: UICollectionViewCell {
         textView.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 3).isActive = true
         textView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor, constant: -5).isActive = true
         textView.textColor = Theme.receivedChatTextColor
+        
+        /* ImageView Constraints */
+        messageImageView.leftAnchor.constraint(equalTo: bubbleView.leftAnchor).isActive = true
+        messageImageView.rightAnchor.constraint(equalTo: bubbleView.rightAnchor).isActive = true
+        messageImageView.topAnchor.constraint(equalTo: bubbleView.topAnchor).isActive = true
+        messageImageView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor).isActive = true
+    }
+    
+    func handleZoomTap(_ tapGesture: UITapGestureRecognizer) {
+        if let imageView = tapGesture.view as? UIImageView {
+            self.chatViewController?.performZooInForStartingImageView(imageView)
+        }
     }
     
     required init?(coder aDecoder: NSCoder) {

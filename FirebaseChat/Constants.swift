@@ -58,6 +58,10 @@ public struct Keys {
     static let fromId = "fromId"
     static let timeStamp = "timeStamp"
     static let userMessages = "userMessages"
+    static let messageImages  = "messageImages"
+    static let imageUrl = "imageUrl"
+    static let width = "imageWidth"
+    static let height = "imageHeight"
 }
 
 //MARK:- Texts
