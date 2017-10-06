@@ -8,7 +8,6 @@
 
 import Foundation
 import UIKit
-import Firebase
 
 class BaseChatCell: UICollectionViewCell {
     var bubbleViewWidthAnchor: NSLayoutConstraint?
@@ -144,17 +143,15 @@ class IncomingChatCell: BaseChatCell {
     override func messageDidSet() {
         super.messageDidSet()
         if let uid = message?.fromId {
-            Database.database().reference().child(Keys.users).child(uid).observe(.value, with: { (snapshot) in
-                if let dictionary = snapshot.value as? [String: Any] {
-                    let user = User(dictionary)
-                    user.id = uid
-                    user.setValuesForKeys(dictionary)
-                    if let profileImageUrl = user.profileImageUrl {
-                        self.profileImageView.loadImageFromChache(with: profileImageUrl)
-                    }
+            FirebaseHandler.user(with: uid) { (user, error) in
+                if error != nil || user == nil {
+                    DLog("ERROR Fetching Profile Image: \(String(describing: error))")
+                    return
                 }
-            }) { (error) in
-                DLog(error)
+                
+                if let profileImageUrl = user?.profileImageUrl {
+                    self.profileImageView.loadImageFromChache(with: profileImageUrl)
+                }
             }
         }
     }

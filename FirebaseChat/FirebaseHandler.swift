@@ -11,6 +11,11 @@ import Firebase
 
 class FirebaseHandler: NSObject {
     
+    /* Configure Firebase */
+    static func configure() {
+        FirebaseApp.configure()
+    }
+    
     /* Check Login Status */
     static func isUserLoggedIn() -> Bool {
         return Auth.auth().currentUser?.uid != nil

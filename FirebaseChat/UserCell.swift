@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import Firebase
 
 class UserCell: UITableViewCell {
     
@@ -99,14 +98,19 @@ class UserCell: UITableViewCell {
             return
         }
         
-        let userRef = Database.database().reference().child(Keys.users).child(partnerId)
-        userRef.observeSingleEvent(of: .value, with: { (snapshot) in
-        if let dictionary = snapshot.value as? [String: Any] {
-            self.textLabel?.text = dictionary[Keys.name] as? String
-                if let profileImageUrl = dictionary[Keys.profileImageUrl] as? String {
-                    self.profileImageView.loadImageFromChache(with: profileImageUrl)
-                }
+        FirebaseHandler.user(with: partnerId) { (user, error) in
+            if error != nil || user == nil {
+                DLog("ERROR Fetching Profile Image: \(String(describing: error))")
+                return
             }
-        })
+            
+            if let name = user?.name {
+                self.textLabel?.text = name
+            }
+            
+            if let profileImageUrl = user?.profileImageUrl {
+                self.profileImageView.loadImageFromChache(with: profileImageUrl)
+            }
+        }
     }
 }
