@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import Firebase
 
 class HomeViewController: UITableViewController {
     
@@ -26,28 +25,26 @@ class HomeViewController: UITableViewController {
     }
     
     func checkIfUserIsLoggedIn() {
-        if Auth.auth().currentUser?.uid == nil {
-            perform(#selector(handleLogout), with: nil, afterDelay: 0)
-        } else {
+        if FirebaseHandler.isUserLoggedIn() {
             fetchUserAndSetUpNavBar()
+        } else {
+            perform(#selector(handleLogout), with: nil, afterDelay: 0)
         }
     }
     
     func fetchUserAndSetUpNavBar() {
         
-        guard let uid = Auth.auth().currentUser?.uid else {
+        guard let uid = FirebaseHandler.uid() else {
             return
         }
         
-        Database.database().reference().child(Keys.users).child(uid).observe(.value, with: { (snapshot) in
-            if let dictionary = snapshot.value as? [String: Any] {
-                let user = User()
-                user.id = uid
-                user.setValuesForKeys(dictionary)
-                self.setUpNavBar(with: user)
+        FirebaseHandler.user(with: uid) { (user, error) in
+            if error != nil {
+                DLog(error!)
+                return
             }
-        }) { (error) in
-            DLog(error)
+            
+            self.setUpNavBar(with: user!)
         }
     }
     
@@ -59,7 +56,7 @@ class HomeViewController: UITableViewController {
             self.tableView.reloadData()
         }
         
-        observeUserMessages()
+        observeMessges()
         
         let titleView: UIView = {
             let view = UIView()
@@ -119,83 +116,6 @@ class HomeViewController: UITableViewController {
         titleView.isUserInteractionEnabled = true
         titleView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(showChatLogController)))
     }
-    
-    func observeUserMessages() {
-        
-        guard let uid = Auth.auth().currentUser?.uid else {
-            return
-        }
-        
-        let userMessageRef = Database.database().reference().child(Keys.userMessages).child(uid)
-        userMessageRef.observe(.childAdded, with: { (snapshot) in
-            let userId = snapshot.key
-            userMessageRef.child(userId).observe(.childAdded, with: { (snapshot) in
-                let messageId = snapshot.key
-                self.fetchMessageWith(messageId)
-                    
-            }, withCancel: nil)
-            
-        }, withCancel: nil)
-    }
-    
-    private func fetchMessageWith(_ messageId: String) {
-        let messageRef = Database.database().reference().child(Keys.messages).child(messageId)
-        messageRef.observeSingleEvent(of: .value, with: { (snapshot) in
-            if let dictionary = snapshot.value as? [String: Any] {
-                let message = Message(dictionary)
-                if let chatPartnerId = message.chatPartnerId(){
-                    self.messageDictionary[chatPartnerId] = message
-                }
-                
-                self.attemptReloadTable()
-            }
-        }, withCancel: nil)
-    }
-    
-    private func attemptReloadTable() {
-        self.timer?.invalidate()
-        self.timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.handleReloadTable), userInfo: nil, repeats: false)
-    }
-    
-    func handleReloadTable() {
-        self.messages = Array(self.messageDictionary.values)
-        self.messages.sort(by: { (message1, message2) -> Bool in
-            return Int(message1.timeStamp!) > Int(message2.timeStamp!)
-        })
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
-}
-
-//MARK:- Handlers
-extension HomeViewController {
-    
-    func handleLogout() {
-        
-        do {
-            try Auth.auth().signOut()
-        } catch let logoutError {
-            DLog(logoutError)
-        }
-        
-        let loginController = LoginViewController()
-        loginController.homeVC = self
-        loginController.modalTransitionStyle = .crossDissolve
-        present(loginController, animated: true, completion: nil)
-    }
-    
-    func handleNewMessage() {
-        let newMessageController = NewMessageViewController()
-        newMessageController.homeVc = self
-        navigationController?.present(newMessageController, animated: true)
-    }
-    
-    func showChatLogController(with user: User) {
-        let chatController = ChatViewController(collectionViewLayout: UICollectionViewFlowLayout())
-        chatController.user = user
-        self.navigationController?.show(chatController, sender: self)
-    }
 }
 
 //MARK:- Table View Data Source and Delegates
@@ -223,19 +143,15 @@ extension HomeViewController {
             return
         }
         
-        Database.database().reference().child(Keys.users).child(partnerId).observe(.value, with: { (snapshot) in
-            if let dictionary = snapshot.value as? [String: Any] {
-                let partner = User()
+        FirebaseHandler.user(with: partnerId) { (user, error) in
+            if let partner = user {
                 partner.id = partnerId
-                partner.setValuesForKeys(dictionary)
                 chatController.user = partner
                 chatController.setUpNavBar(with: partner)
                 DispatchQueue.main.async {
                     self.navigationController?.show(chatController, sender: self)
                 }
             }
-        }) { (error) in
-            DLog(error)
         }
     }
 }

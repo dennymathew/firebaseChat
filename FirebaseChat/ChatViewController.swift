@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import Firebase
 
 class ChatViewController: UICollectionViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
@@ -201,124 +200,6 @@ class ChatViewController: UICollectionViewController, UITextFieldDelegate, UIIma
     }
 }
 
-//MARK:- Handlers
-extension ChatViewController {
-    
-    func observeMessages() {
-        
-        guard let uid = Auth.auth().currentUser?.uid, let toId = user?.id else {
-            return
-        }
-        
-        let userMessageRef = Database.database().reference().child(Keys.userMessages).child(uid).child((toId))
-        userMessageRef.observe(.childAdded, with: { (snapshot) in
-                let messageId = snapshot.key
-                let messageRef = Database.database().reference().child(Keys.messages).child(messageId)
-                messageRef.observeSingleEvent(of: .value, with: { (snapshot) in
-                    if let dictionary = snapshot.value as? [String: Any] {
-                        let message = Message(dictionary)
-                        self.messages.append(message)
-                        self.messages.sort(by: { (message1, message2) -> Bool in
-                            return Int(message2.timeStamp!) > Int(message1.timeStamp!)
-                        })
-                        
-                        DispatchQueue.main.async {
-                            self.collectionView?.reloadData()
-                            let lastIndex = IndexPath(item: self.messages.count - 1, section: 0)
-                            self.collectionView?.scrollToItem(at: lastIndex, at: .bottom, animated: true)
-                        }
-                    }
-                }, withCancel: nil)
-            }, withCancel: nil)
-    }
-    
-    func handleUploadTap() {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.allowsEditing = true
-        present(imagePicker, animated: true, completion: nil)
-    }
-    
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
-        
-        var selectedImageFromPicker: UIImage?
-        if let editedImage  = info["UIImagePickerControllerEditedImage"] as? UIImage {
-            selectedImageFromPicker = editedImage
-        } else if let originalImage = info["UIImagePickerControllerOriginalImage"] as? UIImage {
-            selectedImageFromPicker = originalImage
-        }
-        
-        if let selectedImage = selectedImageFromPicker {
-            uploadImageToFirebaseStorage(selectedImage)
-        }
-        
-        dismiss(animated: true, completion: nil)
-    }
-    
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true, completion: nil)
-    }
-    
-    func uploadImageToFirebaseStorage(_ image: UIImage) {
-        print("Uploading...")
-        
-        let imageName = UUID().uuidString
-        let storageRef = Storage.storage().reference().child(Keys.messageImages).child(imageName)
-        if let uploadData = UIImageJPEGRepresentation(image, 0.2) {
-            storageRef.putData(uploadData, metadata: nil, completion: { (metadata, error) in
-                if error != nil {
-                    print("Failed to upload Image!")
-                    return
-                }
-                
-                if let imageUrl = metadata?.downloadURL()?.absoluteString {
-                    self.handleImageChat(imageUrl, image: image)
-                }
-            })
-        }
-    }
-    
-    func handleImageChat(_ imageUrl: String, image: UIImage) {
-        let properties: [String: Any] = [Keys.imageUrl: imageUrl, Keys.height: image.size.height, Keys.width: image.size.width]
-        sendMessage(with: properties)
-    }
-    
-    func handleTextChat() {
-        if !(inputTextField.text?.elementsEqual(""))! {
-            let properties: [String: Any] = [Keys.text: inputTextField.text!]
-            sendMessage(with: properties)
-        }
-    }
-    
-    func sendMessage(with properties: [String: Any]) {
-        
-        let messageRef = Database.database().reference().child(Keys.messages).childByAutoId()
-        let toId = user?.id!
-        let fromId = Auth.auth().currentUser!.uid
-        let timeStamp: NSNumber = Date().timeIntervalSince1970 as NSNumber
-        var values: [String : Any] = [Keys.toId: toId!, Keys.fromId: fromId, Keys.timeStamp: timeStamp]
-        
-        properties.forEach({values[$0] = $1})
-        messageRef.updateChildValues(values) { (error, ref) in
-            if error != nil {
-                DLog(error!)
-                return
-            }
-            
-            let messageId = messageRef.key
-            let senderMessageRef = Database.database().reference().child(Keys.userMessages).child(fromId).child(toId!)
-            senderMessageRef.updateChildValues([messageId: 1])
-            let recipientMessageRef = Database.database().reference().child(Keys.userMessages).child(toId!).child(fromId)
-            recipientMessageRef.updateChildValues([messageId: 1])
-            
-            DispatchQueue.main.async {
-                self.inputTextField.text = ""
-                self.collectionView?.reloadData()
-            }
-        }
-    }
-}
-
 //MARK:- Delegates
 extension ChatViewController {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -350,7 +231,7 @@ extension ChatViewController: UICollectionViewDelegateFlowLayout {
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let message = messages[indexPath.item]
-        if message.fromId == Auth.auth().currentUser?.uid {
+        if message.fromId == FirebaseHandler.uid() {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AppConstants.outgoingChatCellId, for: indexPath) as! OutgoingChatCell
             cell.chatViewController = self
             cell.message = message
@@ -360,54 +241,6 @@ extension ChatViewController: UICollectionViewDelegateFlowLayout {
             cell.chatViewController = self
             cell.message = message
             return cell
-        }
-    }
-    
-    func performZooInForStartingImageView(_ imageView: UIImageView) {
-        print("Zooming In...")
-        
-        self.startingImageView = imageView
-        self.startingImageView?.isHidden = true
-        startingFrame = imageView.superview?.convert(imageView.frame, to: nil)
-        
-        let zoomInImageView = UIImageView(frame: startingFrame!)
-        zoomInImageView.image = imageView.image
-        zoomInImageView.isUserInteractionEnabled = true
-        zoomInImageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleZoomOut)))
-        
-        if let keyWindow = UIApplication.shared.keyWindow {
-            
-            self.imageBackground = UIView(frame: keyWindow.frame)
-            self.imageBackground?.backgroundColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
-            self.imageBackground?.alpha = 0
-            keyWindow.addSubview(imageBackground!)
-            keyWindow.addSubview(zoomInImageView)
-            
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 1, options: .curveEaseIn, animations: {
-                let height = (self.startingFrame?.height)! / (self.startingFrame?.width)! * keyWindow.frame.width
-                self.imageBackground?.alpha = 0.9
-                self.inputContainerView.alpha = 0
-                zoomInImageView.frame = CGRect(x: 0, y: 0, width: keyWindow.frame.width, height: height)
-                zoomInImageView.center = keyWindow.center
-            }, completion: { (completed) in
-            })
-        }
-    }
-    
-    func handleZoomOut(_ tapRecognizer: UITapGestureRecognizer) {
-        if let zoomOutImageView = tapRecognizer.view as? UIImageView {
-            
-//            zoomOutImageView.layer.cornerRadius = 16
-//            zoomOutImageView.layer.masksToBounds = true
-            UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 1, initialSpringVelocity: 1, options: .curveEaseIn, animations: {
-                zoomOutImageView.frame = self.startingFrame!
-                self.imageBackground?.alpha = 0
-                self.inputContainerView.alpha = 1.0
-            }, completion: { (completed) in
-                self.imageBackground?.removeFromSuperview()
-                zoomOutImageView.removeFromSuperview()
-                self.startingImageView?.isHidden = false
-            })
         }
     }
 }

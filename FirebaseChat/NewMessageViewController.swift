@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import Firebase
 
 class NewMessageViewController: UITableViewController {
 
@@ -22,27 +21,6 @@ class NewMessageViewController: UITableViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(handleCancel))
         tableView.register(UserCell.self, forCellReuseIdentifier: cellId)
         fetchUsers()
-    }
-    
-    func fetchUsers() {
-        Database.database().reference().child(Keys.users).observe(.childAdded, with: { (snapshot) in
-            if let dictionary = snapshot.value as? [String: Any] {
-                let user = User()
-                user.id = snapshot.key
-                user.setValuesForKeys(dictionary)
-                self.users.append(user)
-                
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
-            }
-        }) { (error) in
-            DLog("ERROR: - \(error)")
-        }
-    }
-    
-    func handleCancel() {
-        dismiss(animated: true, completion: nil)
     }
 }
 

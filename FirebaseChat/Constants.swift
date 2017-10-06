@@ -23,11 +23,12 @@ public struct Theme {
     static let navigationBarTintColor = #colorLiteral(red: 0.2745098174, green: 0.4862745106, blue: 0.1411764771, alpha: 1)
     static let navigationItemTintColor = #colorLiteral(red: 0.9529411793, green: 0.6862745285, blue: 0.1333333403, alpha: 1)
     static let profileImageBorderColor = #colorLiteral(red: 0.9529411793, green: 0.6862745285, blue: 0.1333333403, alpha: 1).cgColor
+    static let buttonTitleColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
     
     /* Login/Register Scene */
     static let loginRegisterSceneBGColor = #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1)
     static let loginRegisterViewBGColor = #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)
-    static let loginRegisterButtonBGColor = #colorLiteral(red: 0.9372549057, green: 0.3490196168, blue: 0.1921568662, alpha: 1)
+    static let loginRegisterButtonBGColor = #colorLiteral(red: 0.9529411793, green: 0.6862745285, blue: 0.1333333403, alpha: 1)
     
     /* Home Scene */
     static let timeLabelColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
@@ -62,6 +63,8 @@ public struct Keys {
     static let imageUrl = "imageUrl"
     static let width = "imageWidth"
     static let height = "imageHeight"
+    static let editedImageFromPicker = "UIImagePickerControllerEditedImage"
+    static let originalImageFromPicker = "UIImagePickerControllerOriginalImage"
 }
 
 //MARK:- Texts

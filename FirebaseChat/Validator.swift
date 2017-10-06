@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Validator.swift
 //  FirebaseChat
 //
 //  Created by Denny Mathew on 29/09/17.
@@ -58,7 +58,7 @@ class Validator: NSObject {
         }
         
         //Contains Special Character
-        let characterset = CharacterSet(charactersIn: Validator.alphabetsUpperCase + Validator.alphabetsLowerCase + Validator.decimals)
+        let characterset = CharacterSet(charactersIn: Validator.alphabetsUpperCase + Validator.alphabetsLowerCase + Validator.decimals + " ")
         if name.rangeOfCharacter(from: characterset.inverted) != nil {
             DLog("FAILURE: Name Contains Special Characters")
             return (false, .nameContainsSpecialCharacter)
