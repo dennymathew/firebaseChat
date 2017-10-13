@@ -8,8 +8,19 @@
 
 import Foundation
 import Firebase
+import AVFoundation
 
 class FirebaseHandler: NSObject {
+    
+    /* Storage */
+    private static let profileImagesDirectory = Storage.storage().reference().child(Keys.profileImages)
+    private static let chatImagesDirectory = Storage.storage().reference().child(Keys.chat).child(Keys.messageImages)
+    private static let chatVideosDirectory = Storage.storage().reference().child(Keys.chat).child(Keys.messageVideos)
+    
+    /* Video */
+    private static let usersDirectory = Database.database().reference().child(Keys.users)
+    private static let userMessagesDirectory = Database.database().reference().child(Keys.userMessages)
+    private static let messagesDirectory = Database.database().reference().child(Keys.messages)
     
     /* Configure Firebase */
     static func configure() {
@@ -52,9 +63,8 @@ class FirebaseHandler: NSObject {
             }
             
             //If Success Signing Up, Add profile Image
-            let storageRef = Storage.storage().reference().child(Keys.profileImages).child("\(uid).jpg")
             if let uploadData = UIImageJPEGRepresentation(profileImage, 0.8) {
-                storageRef.putData(uploadData, metadata: nil, completion: { (metadata, error) in
+                profileImagesDirectory.child("\(uid).jpg").putData(uploadData, metadata: nil, completion: { (metadata, error) in
                     if error != nil {
                         completion(nil, error)
                         return
@@ -85,9 +95,7 @@ class FirebaseHandler: NSObject {
     /* Save User in Database */
     static func registerUserIntoDatabase(with uid: String, values: [String: Any], completion: @escaping (Bool, Error?) -> ()) {
         
-        let usersRef = Database.database().reference().child(Keys.users).child(uid)
-        
-        usersRef.updateChildValues(values, withCompletionBlock: { (err, ref) in
+        usersDirectory.child(uid).updateChildValues(values, withCompletionBlock: { (err, ref) in
             if err != nil {
                 DispatchQueue.main.async {
                     completion(false, err)
@@ -114,7 +122,7 @@ class FirebaseHandler: NSObject {
     
     /* Get User Details */
     static func user(with uid: String, response: @escaping (_ user: User?, _ error: Error?) -> ()) {
-        Database.database().reference().child(Keys.users).child(uid).observe(.value, with: { (snapshot) in
+        usersDirectory.child(uid).observe(.value, with: { (snapshot) in
             if let dictionary = snapshot.value as? [String: Any] {
                 let user = User(dictionary)
                 user.id = uid
@@ -128,23 +136,29 @@ class FirebaseHandler: NSObject {
     }
     
     /*Listen User Messages from All Partners */
-    static func observUserMessages(observer: @escaping (_ message: Message) -> ()) {
+    static func observUserMessages(added: @escaping (_ message: Message) -> (), removed: @escaping (_ messageId: String?) ->()) {
         guard let uid = FirebaseHandler.uid() else {
             return
         }
         
-        let userMessageRef = Database.database().reference().child(Keys.userMessages).child(uid)
+        let userMessageRef = userMessagesDirectory.child(uid)
         userMessageRef.observe(.childAdded, with: { (snapshot) in
             let userId = snapshot.key
             userMessageRef.child(userId).observe(.childAdded, with: { (snapshot) in
                 let messageId = snapshot.key
                 FirebaseHandler.message(with: messageId, message: { (message) in
-                    observer(message)
+                    added(message)
                 })
                 
             }, withCancel: nil)
             
         }, withCancel: nil)
+        
+        userMessageRef.observe(.childRemoved, with: { (snapshot) in
+            let messageId = snapshot.key
+            removed(messageId)
+            return
+        })
     }
     
     /*Listen User Messages from a Single Partner */
@@ -154,7 +168,7 @@ class FirebaseHandler: NSObject {
             return
         }
         
-        let userMessageRef = Database.database().reference().child(Keys.userMessages).child(uid).child((partnerId))
+        let userMessageRef = userMessagesDirectory.child(uid).child((partnerId))
         userMessageRef.observe(.childAdded, with: { (snapshot) in
         let messageId = snapshot.key
             FirebaseHandler.message(with: messageId, message: { (message) in
@@ -164,10 +178,27 @@ class FirebaseHandler: NSObject {
         }, withCancel: nil)
     }
     
+    /* Remove Message Thread */
+    static func deleteThread(from partnerId: String, completion: @escaping (_ success: Bool) -> ()) {
+        guard let uid = FirebaseHandler.uid() else {
+            completion(false)
+            return
+        }
+        userMessagesDirectory.child(uid).child(partnerId).removeValue { (error, reference) in
+            if error != nil {
+                DLog("Error Removing Messages: \(String(describing: error))")
+                completion(false)
+                return
+            }
+            
+            completion(true)
+            return
+        }
+    }
+    
     /* Get Message from Database */
     static func message(with messageId: String, message: @escaping (_ message: Message) -> ()) {
-        let messageRef = Database.database().reference().child(Keys.messages).child(messageId)
-        messageRef.observeSingleEvent(of: .value, with: { (snapshot) in
+        messagesDirectory.child(messageId).observeSingleEvent(of: .value, with: { (snapshot) in
             if let dictionary = snapshot.value as? [String: Any] {
                 let msg = Message(dictionary)
                 message(msg)
@@ -177,7 +208,7 @@ class FirebaseHandler: NSObject {
     
     /* Get All Users */
     static func fetchUsers(_ response: @escaping (_ user: User?) -> ()) {
-        Database.database().reference().child(Keys.users).observe(.childAdded, with: { (snapshot) in
+        usersDirectory.observe(.childAdded, with: { (snapshot) in
             if let dictionary = snapshot.value as? [String: Any] {
                 let user = User(dictionary)
                 user.id = snapshot.key
@@ -196,7 +227,7 @@ class FirebaseHandler: NSObject {
             return
         }
         
-        let messageRef = Database.database().reference().child(Keys.messages).childByAutoId()
+        let messageRef = messagesDirectory.childByAutoId()
         let timeStamp: NSNumber = Date().timeIntervalSince1970 as NSNumber
         var values: [String : Any] = [Keys.toId: toId, Keys.fromId: fromId, Keys.timeStamp: timeStamp]
         
@@ -209,9 +240,9 @@ class FirebaseHandler: NSObject {
             }
             
             let messageId = messageRef.key
-            let senderMessageRef = Database.database().reference().child(Keys.userMessages).child(fromId).child(toId)
+            let senderMessageRef = userMessagesDirectory.child(fromId).child(toId)
             senderMessageRef.updateChildValues([messageId: 1])
-            let recipientMessageRef = Database.database().reference().child(Keys.userMessages).child(toId).child(fromId)
+            let recipientMessageRef = userMessagesDirectory.child(toId).child(fromId)
             recipientMessageRef.updateChildValues([messageId: 1])
             
             completion(true)
@@ -220,10 +251,8 @@ class FirebaseHandler: NSObject {
     
     /* Send Image Chat */
     static func uploadChatImage(_ image: UIImage, response: @escaping (_ imageUrl: String?, _ error: Error?) -> ()) {
-        let imageName = UUID().uuidString
-        let storageRef = Storage.storage().reference().child(Keys.messageImages).child(imageName)
         if let uploadData = UIImageJPEGRepresentation(image, 0.2) {
-            storageRef.putData(uploadData, metadata: nil, completion: { (metadata, error) in
+            chatImagesDirectory.child(chatImageFileName()).putData(uploadData, metadata: nil, completion: { (metadata, error) in
                 if error != nil {
                     print("Failed to upload Image!")
                     response(nil, error)
@@ -235,6 +264,54 @@ class FirebaseHandler: NSObject {
                 }
             })
         }
+    }
+    
+    /* Send Video */
+    static func uploadChatVideo(_ fileUrl: URL, progress: @escaping (_ progress: String)-> (), completion: @escaping (_ downloadUrl: String?, _ thumbnailUrl: String?, _ thumbImage: UIImage?, _ error: Error?) -> ()) {
+        let uploadTask = chatVideosDirectory.child(chatVideoFileName()).putFile(from: fileUrl, metadata: nil) { (metadata, error) in
+            
+            if error != nil {
+                DLog("ERROR: \(String(describing: error))")
+                completion(nil, nil, nil, error)
+                return
+            }
+            
+            if let videoUrl = metadata?.downloadURL()?.absoluteString {
+                if let thumbnailImage = FirebaseHandler.thumbnailImage(for: fileUrl) {
+                    if let thumbImageData = UIImageJPEGRepresentation(thumbnailImage, 0.8) {
+                        chatImagesDirectory.child(chatImageThumbnailFileName()).putData(thumbImageData, metadata: nil, completion: { (metadata, error) in
+                            if error != nil {
+                                DLog("Error Uploading Thumbnail: \(String(describing: error))")
+                                return
+                            }
+                            
+                            if let thumbUrl = metadata?.downloadURL()?.absoluteString {
+                                completion(videoUrl, thumbUrl, thumbnailImage, nil)
+                            }
+                        })
+                    }
+                }
+                return
+            }
+        }
+        
+        uploadTask.observe(.progress) { (snapshot) in
+            progress(String(describing: snapshot.progress?.completedUnitCount))
+        }
+    }
+    
+    private static func thumbnailImage(for fileUrl: URL) -> UIImage? {
+        let asset = AVAsset(url: fileUrl)
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        
+        do {
+            let thumbnailCGImage = try imageGenerator.copyCGImage(at: CMTimeMake(1, 60), actualTime: nil)
+            return UIImage(cgImage: thumbnailCGImage)
+        } catch let error {
+            DLog(error)
+        }
+        
+        return nil
     }
     
     /* Handle Auth Errors */

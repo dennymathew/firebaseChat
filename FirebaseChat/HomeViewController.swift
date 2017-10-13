@@ -22,6 +22,7 @@ class HomeViewController: UITableViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Logout", style: .plain, target: self, action: #selector(handleLogout))
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(handleNewMessage))
         tableView.register(UserCell.self, forCellReuseIdentifier: cellId)
+        tableView.allowsMultipleSelection = true
     }
     
     func checkIfUserIsLoggedIn() {
@@ -152,6 +153,26 @@ extension HomeViewController {
                     self.navigationController?.show(chatController, sender: self)
                 }
             }
+        }
+    }
+    
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        
+        let message = self.messages[indexPath.row]
+        
+        if let chatPartnerId = message.chatPartnerId() {
+            FirebaseHandler.deleteThread(from: chatPartnerId, completion: { (success) in
+                if !success {
+                    return
+                }
+                
+                self.messageDictionary.removeValue(forKey: chatPartnerId)
+                self.attemptReloadTable()
+            })
         }
     }
 }

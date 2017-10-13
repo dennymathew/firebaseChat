@@ -132,3 +132,12 @@ extension NSNumber {
         return dateFormatter.string(from: timeStampDate)
     }
 }
+
+extension Date {
+    func now() -> String {
+        let time = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMddHHmm"
+        return formatter.string(from: time)
+    }
+}

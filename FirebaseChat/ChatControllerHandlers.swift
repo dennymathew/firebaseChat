@@ -10,6 +10,8 @@
 
 import Foundation
 import UIKit
+import AVFoundation
+import MobileCoreServices
 
 //MARK:- Handlers
 extension ChatViewController {
@@ -38,11 +40,23 @@ extension ChatViewController {
         let imagePicker = UIImagePickerController()
         imagePicker.delegate = self
         imagePicker.allowsEditing = true
+        imagePicker.mediaTypes = [kUTTypeImage as String, kUTTypeMovie as String]
         present(imagePicker, animated: true, completion: nil)
     }
     
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true, completion: nil)
+    }
+    
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
-        
+        if let videoUrl = info[UIImagePickerControllerMediaURL] as? URL {
+            handleVideoMessage(videoUrl)
+        } else {
+            handleImageMessage(info)
+        }
+    }
+    
+    func handleImageMessage(_ info: [String: Any]) {
         var selectedImageFromPicker: UIImage?
         if let editedImage  = info[Keys.editedImageFromPicker] as? UIImage {
             selectedImageFromPicker = editedImage
@@ -51,36 +65,41 @@ extension ChatViewController {
         }
         
         if let selectedImage = selectedImageFromPicker {
-            uploadImageToFirebaseStorage(selectedImage)
-        }
-        
-        dismiss(animated: true, completion: nil)
-    }
-    
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        dismiss(animated: true, completion: nil)
-    }
-    
-    func uploadImageToFirebaseStorage(_ image: UIImage) {
-        print("Uploading...")
-        
-        FirebaseHandler.uploadChatImage(image) { (imageUrl, error) in
-            if let url = imageUrl {
-                self.handleImageChat(url, image: image)
-            } else {
-                DLog("Error in uploading image!")
+            FirebaseHandler.uploadChatImage(selectedImage) { (imageUrl, error) in
+                if let url = imageUrl {
+                    let properties: [String: Any] = [Keys.imageUrl: url, Keys.height: selectedImage.size.height, Keys.width: selectedImage.size.width]
+                    self.sendMessage(with: properties)
+                } else {
+                    DLog("Error in uploading image!")
+                }
             }
         }
+        
+        dismiss(animated: true, completion: nil)
     }
     
-    func handleImageChat(_ imageUrl: String, image: UIImage) {
-        let properties: [String: Any] = [Keys.imageUrl: imageUrl, Keys.height: image.size.height, Keys.width: image.size.width]
-        sendMessage(with: properties)
+    func handleVideoMessage(_ fileUrl: URL) {
+        FirebaseHandler.uploadChatVideo(fileUrl, progress: { (progress) in
+            DLog("Progress: \(progress)")
+        }, completion: { (videoUrl, thumbnailUrl, thumbnailImage, error) in
+            if error != nil {
+                DLog("ERROR: \(String(describing: error))")
+                return
+            }
+            
+            if let videoUrl = videoUrl, let thumbUrl = thumbnailUrl, let thumbImage = thumbnailImage {
+                let properties: [String: Any] = [Keys.videoUrl: videoUrl, Keys.imageUrl: thumbUrl, Keys.height: thumbImage.size.height, Keys.width: thumbImage.size.width]
+                self.sendMessage(with: properties)
+                return
+            }
+        })
+        
+        dismiss(animated: true, completion: nil)
     }
     
-    func handleTextChat() {
-        if !(inputTextField.text?.elementsEqual(""))! {
-            let properties: [String: Any] = [Keys.text: inputTextField.text!]
+    func handleTextMessage() {
+        if !(inputContainerView.inputTextField.text?.elementsEqual(""))! {
+            let properties: [String: Any] = [Keys.text: inputContainerView.inputTextField.text!]
             sendMessage(with: properties)
         }
     }
@@ -94,7 +113,7 @@ extension ChatViewController {
         FirebaseHandler.sendChatMessage(toId, properties: properties) { (success) in
             DispatchQueue.main.async {
                 self.collectionView?.reloadData()
-                self.inputTextField.text = ""
+                self.inputContainerView.inputTextField.text = ""
             }
         }
     }

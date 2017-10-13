@@ -14,6 +14,9 @@ public struct AppConstants {
     static let networkCheckNotification = Notification.Name(rawValue: "NetworkCheckCompleted")
     static let outgoingChatCellId = "outCell"
     static let incomingChatCellId = "inCell"
+    static let videoFileNamePrefix = "FBC_VID_"
+    static let imageFileNamePrefix = "FBC_IMG_"
+    static let thumbnailFileNamePrefix = "FBC_TMB_"
 }
 
 //MARK:- Theme Colors
@@ -53,6 +56,7 @@ public struct Keys {
     static let password = "password"
     static let mobileNumber = "mobileNumber"
     static let profileImageUrl = "profileImageUrl"
+    static let chat = "chat"
     static let messages = "messages"
     static let text = "text"
     static let toId = "toId"
@@ -60,7 +64,9 @@ public struct Keys {
     static let timeStamp = "timeStamp"
     static let userMessages = "userMessages"
     static let messageImages  = "messageImages"
+    static let messageVideos = "messageVideos"
     static let imageUrl = "imageUrl"
+    static let videoUrl = "videoUrl"
     static let width = "imageWidth"
     static let height = "imageHeight"
     static let editedImageFromPicker = "UIImagePickerControllerEditedImage"

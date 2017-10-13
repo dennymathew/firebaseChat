@@ -35,15 +35,20 @@ extension HomeViewController {
     }
     
     func observeMessges() {
-        FirebaseHandler.observUserMessages { (message) in
+        FirebaseHandler.observUserMessages(added: { (message) in
             if let chatPartnerId = message.chatPartnerId(){
                 self.messageDictionary[chatPartnerId] = message
+                self.attemptReloadTable()
+            }
+        }) { (messageId) in
+            if let removedMessageId = messageId {
+                self.messageDictionary.removeValue(forKey: removedMessageId)
                 self.attemptReloadTable()
             }
         }
     }
     
-    private func attemptReloadTable() {
+    func attemptReloadTable() {
         self.timer?.invalidate()
         self.timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.handleReloadTable), userInfo: nil, repeats: false)
     }

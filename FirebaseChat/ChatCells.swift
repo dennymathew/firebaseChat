@@ -8,10 +8,14 @@
 
 import Foundation
 import UIKit
+import AVFoundation
 
 class BaseChatCell: UICollectionViewCell {
+    
     var bubbleViewWidthAnchor: NSLayoutConstraint?
     var chatViewController: ChatViewController?
+    var playerLayer: AVPlayerLayer?
+    var player: AVPlayer?
     
     var message: Message? {
         didSet {
@@ -58,10 +62,38 @@ class BaseChatCell: UICollectionViewCell {
         return imageView
     }()
     
+    lazy var playButton: UIButton = {
+        let button = UIButton()
+        button.setImage(#imageLiteral(resourceName: "button_play"), for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isUserInteractionEnabled = true
+        button.addTarget(self, action: #selector(handlePlay), for: .touchUpInside)
+        return button
+    }()
+
+    let spinner: UIActivityIndicatorView = {
+        let uia = UIActivityIndicatorView()
+        uia.activityIndicatorViewStyle = .white
+        uia.hidesWhenStopped = true
+        uia.translatesAutoresizingMaskIntoConstraints = false
+        return uia
+    }()
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = Theme.chatBackgroundColor
         setUpViews()
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        playerLayer?.removeFromSuperlayer()
+        player?.pause()
+        spinner.stopAnimating()
     }
     
     func setUpViews() {
@@ -86,6 +118,20 @@ class BaseChatCell: UICollectionViewCell {
         messageImageView.rightAnchor.constraint(equalTo: bubbleView.rightAnchor).isActive = true
         messageImageView.topAnchor.constraint(equalTo: bubbleView.topAnchor).isActive = true
         messageImageView.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor).isActive = true
+        
+        /* Play Button Constraints */
+        self.bubbleView.addSubview(playButton)
+        playButton.centerXAnchor.constraint(equalTo: bubbleView.centerXAnchor).isActive = true
+        playButton.centerYAnchor.constraint(equalTo: bubbleView.centerYAnchor).isActive = true
+        playButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        playButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        
+        /* Spinner Constraints */
+        self.bubbleView.addSubview(spinner)
+        spinner.centerXAnchor.constraint(equalTo: bubbleView.centerXAnchor).isActive = true
+        spinner.centerYAnchor.constraint(equalTo: bubbleView.centerYAnchor).isActive = true
+        spinner.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        spinner.heightAnchor.constraint(equalToConstant: 50).isActive = true
     }
     
     func messageDidSet() {
@@ -107,19 +153,39 @@ class BaseChatCell: UICollectionViewCell {
             messageImageView.isHidden = true
         }
         
+        //Play Button for Videos
+        playButton.isHidden = message?.videoUrl == nil
+        
         if let timeStamp = message?.timeStamp?.toTimeString("hh:mm a") {
             timeLabel.text = timeStamp
         }
     }
     
     func handleZoomTap(_ tapGesture: UITapGestureRecognizer) {
+        
+        //TODO: Handle Video Player Zooming In
+        if message?.videoUrl != nil {
+            return
+        }
+        
         if let imageView = tapGesture.view as? UIImageView {
             self.chatViewController?.performZoomInForStartingImageView(imageView)
         }
     }
     
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    func handlePlay() {
+        if let urlString = message?.videoUrl, let url = URL(string: urlString) {
+            player = AVPlayer(url: url)
+            playerLayer = AVPlayerLayer(player: player!)
+            playerLayer?.frame = bubbleView.bounds
+            if (playerLayer != nil) {
+                bubbleView.layer.addSublayer(playerLayer!)
+                player?.play()
+                spinner.startAnimating()
+                playButton.isHidden = true
+                DLog("Playing Video...")
+            }
+        }
     }
 }
 

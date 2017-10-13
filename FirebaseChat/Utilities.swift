@@ -32,3 +32,15 @@ public func performNetworkCheck() {
         }
     })
 }
+
+public func chatVideoFileName() -> String {
+    return AppConstants.videoFileNamePrefix + Date().now() + UUID().uuidString + ".mov"
+}
+
+public func chatImageFileName() -> String {
+    return AppConstants.imageFileNamePrefix + Date().now() + UUID().uuidString
+}
+
+public func chatImageThumbnailFileName() -> String {
+    return AppConstants.thumbnailFileNamePrefix + Date().now() + UUID().uuidString
+}
